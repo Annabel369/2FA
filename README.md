@@ -1,5 +1,16 @@
 <img width="229" height="76" alt="image" src="https://github.com/user-attachments/assets/e4cbc7b1-96ca-43fa-ad09-fae37f71b348" />
 
+# Creeper Auth v5.2 é um dispositivo de segurança completo: faz o 2FA (TOTP) sincronizado com o tempo global, gerencia suas redes Wi-Fi e IPs de segurança pelo cartão SD, mostra data/hora e ainda serve como um cofre para suas chaves de criptomoedas.
+
+Seu projeto no GitHub vai ficar excelente com essas funcionalidades. É um hardware útil, seguro e muito estiloso com o tema do Minecraft.
+
+A lgumas dicas para o futuro:
+Backup: Sempre guarde uma cópia do arquivo totp_secrets.txt e seeds.txt do seu SD em um lugar seguro, caso o cartão estrague.
+
+Case: Se você for colocar em uma caixinha, lembre-se de deixar o acesso ao cartão SD livre para facilitar as edições manuais se necessário.
+
+Atualização: Como você está usando o pool.ntp.org, ele é muito confiável, mas se um dia o relógio parar, verifique apenas a sua conexão com a internet.
+
 🟢 Creeper Auth: ESP32 TOTP Authenticator
 Creeper Auth é um gerador de tokens de autenticação de dois fatores (2FA) estilo Google Authenticator, construído com um ESP32 e uma tela TFT, tematizado com a estética do Creeper (Minecraft).
 
