@@ -1,3 +1,5 @@
+<img width="229" height="76" alt="image" src="https://github.com/user-attachments/assets/e4cbc7b1-96ca-43fa-ad09-fae37f71b348" />
+
 🟢 Creeper Auth: ESP32 TOTP Authenticator
 Creeper Auth é um gerador de tokens de autenticação de dois fatores (2FA) estilo Google Authenticator, construído com um ESP32 e uma tela TFT, tematizado com a estética do Creeper (Minecraft).
 
