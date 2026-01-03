@@ -11,6 +11,43 @@ Case: Se você for colocar em uma caixinha, lembre-se de deixar o acesso ao cart
 
 Atualização: Como você está usando o pool.ntp.org, ele é muito confiável, mas se um dia o relógio parar, verifique apenas a sua conexão com a internet.
 
+
+# 🟢 Creeper Auth v5.2 - 2FA & Crypto Vault
+Este é um autenticador de dois fatores (TOTP) físico baseado no ESP32, com tema de Minecraft (Creeper). Ele sincroniza via NTP com o tempo universal (UTC 0) e permite gerenciar tokens e frases de recuperação (Seeds) via interface Web segura.
+
+# 🚀 Funcionalidades
+TOTP 2FA: Gera códigos de 6 dígitos compatíveis com Google, Discord, GitHub, etc.
+
+Crypto Vault: Espaço seguro para armazenar Seed Phrases (12/24 palavras).
+
+Sincronia Global: Usa NTP para tempo universal, funcionando em qualquer lugar do mundo.
+
+Gestão Web: Interface para Adicionar, Deletar e Editar contas e configurações de rede.
+
+Segurança de Rede: Bloqueio por IP ou prefixo de rede (Intranet).
+
+Armazenamento: Tudo é salvo no cartão SD (contas, seeds e Wi-Fi).
+
+🛠️ Hardware Necessário
+ESP32 (30 pinos).
+
+Display TFT 2.4" (Driver ILI9341 ou ST7789).
+
+Módulo de Cartão SD (SPI).
+
+Cartão Micro SD.
+
+📚 Bibliotecas Utilizadas
+TFT_eSPI (Configurar o User_Setup.h para o seu display).
+
+NTPClient e WiFiUdp.
+
+ESP32FtpServer (Para acesso remoto aos arquivos do SD).
+
+mbedtls (Nativa do ESP32 para criptografia HMAC-SHA1).
+
+Dica para os usuários: "Lembre-se de configurar o arquivo config.txt no seu cartão SD com seu Wi-Fi ou use o painel de controle via IP exibido na tela do Creeper."
+
 🟢 Creeper Auth: ESP32 TOTP Authenticator
 Creeper Auth é um gerador de tokens de autenticação de dois fatores (2FA) estilo Google Authenticator, construído com um ESP32 e uma tela TFT, tematizado com a estética do Creeper (Minecraft).
 
