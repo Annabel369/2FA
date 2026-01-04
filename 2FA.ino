@@ -1,4 +1,4 @@
-// ===== CREEPER AUTH v5.2 - EDIÇÃO TOTAL & SEGURANÇA LOCAL =====
+// ===== CREEPER AUTH v5.5 - DUAL STACK + NETWORK + SEED COLUMNS =====
 #include <WiFi.h>
 #include <TFT_eSPI.h>
 #include <SPI.h>
@@ -14,15 +14,18 @@
 #define SD_CS 5
 TFT_eSPI tft = TFT_eSPI();
 WiFiUDP ntpUDP;
+WiFiUDP udpWhitelist; 
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60000); 
 WebServer server(80);
 FtpServer ftpSrv;
 
-// Configurações (Fallback)
+// Configurações e Whitelist
 String cfgSSID = "Maria Cristina 4G";
 String cfgPASS = "1247bfam";
 String cfgMODO = "REDE"; 
-String cfgIP   = "192.168.100."; // Prefixo para Rede ou IP fixo para Único
+String cfgIP   = "192.168.100."; 
+String dynamicWhitelist = ""; 
+char packetBuffer[255]; 
 
 struct TotpAccount { String name; String secretBase32; String password; };
 struct SeedRecord { String label; String phrase; };
@@ -38,12 +41,17 @@ bool forceRedraw = true;
 // --- Gestão de Arquivos ---
 void salvarConfig() {
   File f = SD.open("/config.txt", FILE_WRITE);
-  if (f) { f.println("SSID=" + cfgSSID); f.println("PASS=" + cfgPASS); f.println("MODO=" + cfgMODO); f.println("IP_ALVO=" + cfgIP); f.close(); }
+  if (f) { 
+    f.println("SSID=" + cfgSSID); 
+    f.println("PASS=" + cfgPASS); 
+    f.println("MODO=" + cfgMODO); 
+    f.println("IP_ALVO=" + cfgIP); 
+    f.close(); 
+  }
 }
 
 void carregarTudo() {
   if (!SD.begin(SD_CS)) return;
-  // Carregar Config de Rede
   if (SD.exists("/config.txt")) {
     File f = SD.open("/config.txt", FILE_READ);
     while (f.available()) {
@@ -55,7 +63,7 @@ void carregarTudo() {
     }
     f.close();
   }
-  // Carregar Tokens 2FA
+  // Carregar Tokens
   accounts.clear();
   File f2 = SD.open("/totp_secrets.txt", FILE_READ);
   if (f2) {
@@ -66,7 +74,7 @@ void carregarTudo() {
     }
     f2.close();
   }
-  // Carregar Seeds Cripto
+  // Carregar Seeds
   seeds.clear();
   File fs = SD.open("/seeds.txt", FILE_READ);
   if (fs) {
@@ -112,7 +120,7 @@ String calcTOTP(const String& secret, unsigned long epoch) {
   return String(buf);
 }
 
-// --- Telas e Visor ---
+// --- Interface Visor ---
 void drawCreeper() {
   tft.fillRect(60, 40, 120, 120, TFT_GREEN);
   tft.fillRect(80, 60, 25, 25, TFT_BLACK); tft.fillRect(135, 60, 25, 25, TFT_BLACK);
@@ -122,9 +130,8 @@ void drawCreeper() {
 void drawInfo(unsigned long epoch) {
   time_t rawtime = (time_t)epoch;
   struct tm * ti = gmtime(&rawtime);
-  char f_time[15];
-  sprintf(f_time, "%02d/%02d %02d:%02d", ti->tm_mday, ti->tm_mon + 1, ti->tm_hour, ti->tm_min);
-  
+  char f_time[20];
+  sprintf(f_time, "%02d/%02d %02d:%02d", ti->tm_mday, ti->tm_mon + 1, (ti->tm_hour + 21)%24, ti->tm_min);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   tft.drawCentreString(f_time, 120, 175, 2);
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
@@ -136,118 +143,136 @@ void setup() {
   Serial.begin(115200);
   SPI.begin(18, 19, 23, SD_CS);
   tft.init(); tft.setRotation(0); tft.invertDisplay(true); tft.fillScreen(TFT_BLACK);
-  
   carregarTudo();
   
   WiFi.begin(cfgSSID.c_str(), cfgPASS.c_str());
+  WiFi.enableIPv6(); 
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && millis()-start < 10000) delay(500);
-  
-  timeClient.begin();
 
-  // Função de segurança recuperada v4
+  timeClient.begin();
+  udpWhitelist.begin(1234);
+
   auto ehMickey = []() {
     String clientIP = server.client().remoteIP().toString();
+    if (dynamicWhitelist.indexOf(clientIP) >= 0) return true;
     if (cfgMODO == "REDE") return clientIP.startsWith(cfgIP);
     return clientIP == cfgIP;
   };
 
-  String css = "<style>body{background:#000;color:#0f0;font-family:monospace;text-align:center;} .box{border:2px solid #0f0;padding:20px;display:inline-block;margin-top:20px;width:320px;} a{color:#0f0;text-decoration:none;border:1px solid #0f0;padding:5px;margin:3px;display:inline-block;} input,select{background:#111;color:#0f0;border:1px solid #0f0;padding:8px;width:100%;margin:5px 0;box-sizing:border-box;}</style>";
+  String css = "<style>body{background:#000;color:#0f0;font-family:monospace;text-align:center;} .box{border:2px solid #0f0;padding:20px;display:inline-block;margin-top:20px;width:320px;} a{color:#0f0;text-decoration:none;border:1px solid #0f0;padding:5px;margin:3px;display:inline-block;} .edit{color:#ff0;border-color:#ff0;} .del{color:#f00;border-color:#f00;} input,select{background:#111;color:#0f0;border:1px solid #0f0;padding:8px;width:100%;margin:5px 0;box-sizing:border-box;}</style>";
 
   // --- Rotas ---
   server.on("/", [css, ehMickey](){
-    String h = "<html><head>"+css+"</head><body><div class='box'><h2>CREEPER AUTH v5.2</h2>";
-    h += "<form action='/select'><select name='id'>";
-    h += "<option value='-1'>VISOR CREEPER</option>";
+    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>CREEPER AUTH v5.5</h2>";
+    h += "<form action='/select'><select name='id'><option value='-1'>VISOR CREEPER</option>";
     for(int i=0; i<accounts.size(); i++) h += "<option value='"+String(i)+"'>"+accounts[i].name+"</option>";
-    h += "</select><input type='submit' value='OK'></form><br>";
+    h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
     if(ehMickey()) {
-      h += "<a href='/vault'>VAULT</a> <a href='/manage'>LISTA</a><br><a href='/add'>+ TOKEN</a> <a href='/network'>WI-FI & IP</a>";
+      h += "<a href='/vault'>VAULT</a> <a href='/manage'>TOKENS</a><br><a href='/network'>WI-FI & IP</a>";
     } else {
-      h += "<p style='color:red'>ACESSO RESTRITO AO IP CONFIGURADO</p>";
+      h += "<p style='color:red'>ACESSO NEGADO: IP PROTEGIDO</p>";
     }
     h += "</div></body></html>";
     server.send(200, "text/html", h);
   });
 
-  // Gestão de Rede com Edição (Recuperado e Melhorado)
+  server.on("/manage", [css, ehMickey](){
+    if(!ehMickey()) return server.send(403, "Negado");
+    String h = "<html><head>"+css+"</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
+    for(int i=0; i<accounts.size(); i++) {
+      h += "<div style='margin-bottom:10px;'>" + accounts[i].name + " <br>";
+      h += "<a href='/edit?id="+String(i)+"' class='edit'>[E] EDITAR</a> ";
+      h += "<a href='/del?id="+String(i)+"' class='del'>[X] EXCLUIR</a></div>";
+    }
+    h += "<hr><a href='/add'>+ NOVO TOKEN</a><br><a href='/'>VOLTAR</a></div></body></html>";
+    server.send(200, "text/html", h);
+  });
+
+  server.on("/edit", [css, ehMickey](){
+    if(!ehMickey()) return server.send(403, "Negado");
+    int id = server.arg("id").toInt();
+    TotpAccount acc = accounts[id];
+    String h = "<html><head>"+css+"</head><body><div class='box'><h2>EDITAR TOKEN</h2><form method='POST' action='/update?id="+String(id)+"'>";
+    h += "NOME:<input name='u' value='"+acc.name+"'>SECRET:<input name='s' value='"+acc.secretBase32+"'>PASS:<input name='p' value='"+acc.password+"'><input type='submit' value='SALVAR ALTERAÇÕES'></form></div></body></html>";
+    server.send(200, "text/html", h);
+  });
+
+  server.on("/update", HTTP_POST, [ehMickey](){
+    if(ehMickey()){
+      int id = server.arg("id").toInt();
+      String s = server.arg("s"); s.toUpperCase(); s.replace(" ", "");
+      accounts[id] = {server.arg("u"), s, server.arg("p")};
+      SD.remove("/totp_secrets.txt"); File f = SD.open("/totp_secrets.txt", FILE_WRITE);
+      for(auto const& a : accounts) f.println(a.name + "=" + a.secretBase32 + "=" + a.password);
+      f.close(); forceRedraw = true;
+      server.send(200, "text/html", "<script>location.href='/manage';</script>");
+    }
+  });
+
   server.on("/network", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
     String h = "<html><head>"+css+"</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' action='/net_save'>";
-    h += "SSID:<input name='ss' value='"+cfgSSID+"'>";
-    h += "SENHA:<input name='pw' value='"+cfgPASS+"'>";
+    h += "SSID:<input name='ss' value='"+cfgSSID+"'>PASS:<input name='pw' value='"+cfgPASS+"'>";
     h += "MODO:<select name='mo'><option value='REDE' "+(String(cfgMODO=="REDE"?"selected":""))+">REDE (Prefixo)</option>";
     h += "<option value='UNICO' "+(String(cfgMODO=="UNICO"?"selected":""))+">IP UNICO</option></select>";
-    h += "IP/PREFIXO:<input name='ip' value='"+cfgIP+"'>";
-    h += "<input type='submit' value='SALVAR E REINICIAR'></form><br><a href='/'>VOLTAR</a></div></body></html>";
+    h += "IP/PREFIXO:<input name='ip' value='"+cfgIP+"'><input type='submit' value='SALVAR E REINICIAR'></form><br><a href='/'>VOLTAR</a></div></body></html>";
     server.send(200, "text/html", h);
   });
 
   server.on("/net_save", HTTP_POST, [ehMickey](){
     if(ehMickey()){
       cfgSSID=server.arg("ss"); cfgPASS=server.arg("pw"); cfgMODO=server.arg("mo"); cfgIP=server.arg("ip");
-      salvarConfig(); ESP.restart();
+      salvarConfig(); delay(1000); ESP.restart();
     }
   });
 
-  // VAULT para Crypto Seeds
+  // --- Rotas Seed (Vault) ---
   server.on("/vault", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
     String h = "<html><head>"+css+"</head><body><div class='box'><h2>CRYPTO VAULT</h2>";
-    for(int i=0; i<seeds.size(); i++) {
-       h += "<b>"+seeds[i].label+"</b> <a href='/view_seed?id="+String(i)+"'>VER</a> <a href='/del_seed?id="+String(i)+"' style='color:red'>X</a><br>";
-    }
+    for(int i=0; i<seeds.size(); i++) h += "<b>"+seeds[i].label+"</b> <a href='/view_seed?id="+String(i)+"'>VER</a> <a href='/del_seed?id="+String(i)+"' class='del'>X</a><br>";
     h += "<hr><form method='POST' action='/reg_seed'>NOME:<input name='n'>SEED:<input name='s'><input type='submit' value='ADD SEED'></form><br><a href='/'>VOLTAR</a></div></body></html>";
     server.send(200, "text/html", h);
   });
 
-  // Gerenciamento de Tokens (Com Edição v4)
-  server.on("/manage", [css, ehMickey](){
-    if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<html><head>"+css+"</head><body><div class='box'><h2>TOKENS 2FA</h2>";
-    for(int i=0; i<accounts.size(); i++) {
-      h += accounts[i].name + " <a href='/edit?id="+String(i)+"' style='color:#ff0'>[E]</a> <a href='/del?id="+String(i)+"' style='color:#f00'>[X]</a><br>";
+  server.on("/view_seed", [ehMickey](){
+    if(ehMickey()){ currentSeedIndex = server.arg("id").toInt(); forceRedraw = true; server.send(200, "text/html", "<script>location.href='/vault';</script>"); }
+  });
+
+  server.on("/del_seed", [ehMickey](){
+    if(ehMickey()){
+      int id = server.arg("id").toInt();
+      if(id >= 0 && id < seeds.size()) seeds.erase(seeds.begin() + id);
+      SD.remove("/seeds.txt"); File f = SD.open("/seeds.txt", FILE_WRITE);
+      for(auto const& sd : seeds) f.println(sd.label + "|" + sd.phrase);
+      f.close(); server.send(200, "text/html", "<script>location.href='/vault';</script>");
     }
-    h += "<br><a href='/'>VOLTAR</a></div></body></html>";
-    server.send(200, "text/html", h);
   });
 
-  server.on("/edit", [css, ehMickey](){
-    int id = server.arg("id").toInt();
-    TotpAccount acc = accounts[id];
-    String h = "<html><head>"+css+"</head><body><div class='box'><h2>EDITAR</h2><form method='POST' action='/update?id="+String(id)+"'>";
-    h += "NOME:<input name='u' value='"+acc.name+"'>SEED:<input name='s' value='"+acc.secretBase32+"'>PASS:<input name='p' value='"+acc.password+"'><input type='submit' value='OK'></form></div></body></html>";
-    server.send(200, "text/html", h);
+  server.on("/reg_seed", HTTP_POST, [ehMickey](){
+    if(ehMickey()){
+      seeds.push_back({server.arg("n"), server.arg("s")});
+      SD.remove("/seeds.txt"); File f = SD.open("/seeds.txt", FILE_WRITE);
+      for(auto const& sd : seeds) f.println(sd.label + "|" + sd.phrase);
+      f.close(); server.send(200, "text/html", "<script>location.href='/vault';</script>");
+    }
   });
 
-  server.on("/update", HTTP_POST, [ehMickey](){
-    int id = server.arg("id").toInt();
-    String s = server.arg("s"); s.toUpperCase(); s.replace(" ", "");
-    accounts[id] = {server.arg("u"), s, server.arg("p")};
-    SD.remove("/totp_secrets.txt"); File f = SD.open("/totp_secrets.txt", FILE_WRITE);
-    for(auto const& a : accounts) f.println(a.name + "=" + a.secretBase32 + "=" + a.password);
-    f.close(); forceRedraw = true;
-    server.send(200, "text/html", "<script>location.href='/manage';</script>");
+  server.on("/del", [ehMickey](){
+    if(ehMickey()){
+      int id = server.arg("id").toInt();
+      if(id >= 0 && id < accounts.size()) accounts.erase(accounts.begin() + id);
+      SD.remove("/totp_secrets.txt"); File f = SD.open("/totp_secrets.txt", FILE_WRITE);
+      for(auto const& a : accounts) f.println(a.name + "=" + a.secretBase32 + "=" + a.password);
+      f.close(); forceRedraw = true;
+      server.send(200, "text/html", "<script>location.href='/manage';</script>");
+    }
   });
 
-  // Rotas Auxiliares (Add, Del, Select...)
-  server.on("/add", [css](){
-    String h = "<html><head>"+css+"</head><body><div class='box'><h2>NOVO TOKEN</h2><form method='POST' action='/reg'>NOME:<input name='u'>SEED:<input name='s'>PASS:<input name='p'><input type='submit' value='OK'></form></div></body></html>";
-    server.send(200, "text/html", h);
+  server.on("/select", [ehMickey](){
+    if(ehMickey()){ currentIndex = server.arg("id").toInt(); currentSeedIndex = -1; forceRedraw = true; server.send(200, "text/html", "<script>location.href='/';</script>"); }
   });
-
-  server.on("/reg", HTTP_POST, [](){
-    String s = server.arg("s"); s.toUpperCase(); s.replace(" ", "");
-    accounts.push_back({server.arg("u"), s, server.arg("p")});
-    File f = SD.open("/totp_secrets.txt", FILE_APPEND); f.println(server.arg("u") + "=" + s + "=" + server.arg("p")); f.close();
-    server.send(200, "text/html", "<script>location.href='/';</script>");
-  });
-
-  server.on("/del", [](){ accounts.erase(accounts.begin() + server.arg("id").toInt()); SD.remove("/totp_secrets.txt"); File f = SD.open("/totp_secrets.txt", FILE_WRITE); for(auto const& a : accounts) f.println(a.name + "=" + a.secretBase32 + "=" + a.password); f.close(); server.send(200, "text/html", "<script>location.href='/manage';</script>"); });
-  server.on("/reg_seed", HTTP_POST, [](){ seeds.push_back({server.arg("n"), server.arg("s")}); SD.remove("/seeds.txt"); File f = SD.open("/seeds.txt", FILE_WRITE); for(auto const& sd : seeds) f.println(sd.label + "|" + sd.phrase); f.close(); server.send(200, "text/html", "<script>location.href='/vault';</script>"); });
-  server.on("/del_seed", [](){ seeds.erase(seeds.begin() + server.arg("id").toInt()); SD.remove("/seeds.txt"); File f = SD.open("/seeds.txt", FILE_WRITE); for(auto const& sd : seeds) f.println(sd.label + "|" + sd.phrase); f.close(); server.send(200, "text/html", "<script>location.href='/vault';</script>"); });
-  server.on("/view_seed", [](){ currentSeedIndex = server.arg("id").toInt(); forceRedraw = true; server.send(200, "text/html", "<script>location.href='/vault';</script>"); });
-  server.on("/select", [](){ currentIndex = server.arg("id").toInt(); currentSeedIndex = -1; forceRedraw = true; server.send(200, "text/html", "<script>location.href='/';</script>"); });
 
   server.begin();
   ftpSrv.begin("creeper", "1234");
@@ -257,22 +282,47 @@ void loop() {
   server.handleClient();
   ftpSrv.handleFTP();
   timeClient.update();
+
+  int packetSize = udpWhitelist.parsePacket();
+  if (packetSize) {
+    int len = udpWhitelist.read(packetBuffer, 255);
+    if (len > 0) packetBuffer[len] = 0;
+    dynamicWhitelist = String(packetBuffer);
+  }
+
   unsigned long epoch = timeClient.getEpochTime();
   int secondsLeft = 30 - (epoch % 30);
 
   if (secondsLeft != lastSec || forceRedraw) {
     if (forceRedraw) { tft.fillScreen(TFT_BLACK); forceRedraw = false; }
     
+    // --- DISPLAY SEED (3 COLUNAS) ---
     if (currentSeedIndex >= 0) {
-      tft.fillScreen(TFT_BLACK); tft.setTextColor(TFT_ORANGE); tft.drawCentreString("SEED PHRASE", 120, 30, 2);
-      tft.setTextColor(TFT_WHITE); tft.drawCentreString(seeds[currentSeedIndex].label, 120, 60, 4);
-      tft.setTextSize(1); String p = seeds[currentSeedIndex].phrase;
-      for(int i=0; i<p.length(); i+=18) tft.drawCentreString(p.substring(i, i+18), 120, 100+(i/18*20), 2);
+      tft.fillScreen(TFT_BLACK);
+      tft.setTextColor(TFT_ORANGE); tft.drawCentreString(seeds[currentSeedIndex].label, 120, 10, 2);
+      
+      String phrase = seeds[currentSeedIndex].phrase;
+      int wordCount = 0;
+      String words[24];
+      int start = 0, end = phrase.indexOf(' ');
+      while (end != -1 && wordCount < 23) {
+        words[wordCount++] = phrase.substring(start, end);
+        start = end + 1; end = phrase.indexOf(' ', start);
+      }
+      words[wordCount++] = phrase.substring(start);
+
+      tft.setTextSize(1);
+      for(int i=0; i<wordCount; i++) {
+        int col = i / 8; // 3 colunas de 8 palavras
+        int row = i % 8;
+        int x = 10 + (col * 80);
+        int y = 45 + (row * 22);
+        tft.setTextColor(TFT_DARKGREY); tft.setCursor(x, y); tft.print(String(i+1));
+        tft.setTextColor(TFT_WHITE); tft.setCursor(x + 15, y); tft.print(words[i]);
+      }
     } else {
-      if (currentIndex == -1) {
-        drawCreeper();
-        drawInfo(epoch);
-      } else {
+      if (currentIndex == -1) { drawCreeper(); drawInfo(epoch); }
+      else {
         tft.setTextColor(TFT_YELLOW, TFT_BLACK); tft.drawCentreString(accounts[currentIndex].name, 120, 30, 4);
         tft.setTextColor(TFT_GREEN, TFT_BLACK); tft.drawCentreString(calcTOTP(accounts[currentIndex].secretBase32, epoch), 120, 100, 7);
         tft.fillRect(20, 170, 200, 10, TFT_BLACK);
