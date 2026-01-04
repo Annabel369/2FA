@@ -1,4 +1,7 @@
 <img width="229" height="76" alt="image" src="https://github.com/user-attachments/assets/e4cbc7b1-96ca-43fa-ad09-fae37f71b348" />
+<img width="1040" height="503" alt="image" src="https://github.com/user-attachments/assets/07b3348c-3310-44e3-be96-e2cc8f625813" />
+ESP32-2432S028R
+
 
 # Creeper Auth v5.2 é um dispositivo de segurança completo: faz o 2FA (TOTP) sincronizado com o tempo global, gerencia suas redes Wi-Fi e IPs de segurança pelo cartão SD, mostra data/hora e ainda serve como um cofre para suas chaves de criptomoedas.
 
