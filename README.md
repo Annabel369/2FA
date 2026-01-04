@@ -4,7 +4,6 @@ ESP32-2432S028R
 
 https://github.com/user-attachments/assets/b97c8798-70a3-4e39-a5d2-1c58f077c853
 
-<img width="622" height="473" alt="image" src="https://github.com/user-attachments/assets/1a4867a9-9d38-447c-810b-2b0e25ce56ed" />
 
 
 # 🟢 Creeper Auth v5.5 - Dual Stack & Crypto Vault
