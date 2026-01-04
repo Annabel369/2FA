@@ -66,6 +66,9 @@ MODO=REDE
 IP_ALVO=192.168.100.
 O Creeper iniciará e mostrará o IPv4 e o IPv6 na tela.
 
+<img width="1504" height="575" alt="image" src="https://github.com/user-attachments/assets/85b3c213-bd00-45fe-8296-be44f813e2b7" />
+
+
 Execute o script agente_creeper.py no seu PC para liberar o acesso ao painel administrativo.
 
 # 📂 Estrutura de Arquivos no SD
