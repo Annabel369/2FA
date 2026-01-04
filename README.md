@@ -2,6 +2,10 @@
 <img width="1040" height="503" alt="image" src="https://github.com/user-attachments/assets/07b3348c-3310-44e3-be96-e2cc8f625813" />
 ESP32-2432S028R
 
+https://github.com/user-attachments/assets/b97c8798-70a3-4e39-a5d2-1c58f077c853
+
+<img width="622" height="473" alt="image" src="https://github.com/user-attachments/assets/1a4867a9-9d38-447c-810b-2b0e25ce56ed" />
+
 
 # 🟢 Creeper Auth v5.5 - Dual Stack & Crypto Vault
 O Creeper Auth v5.5 é um dispositivo de segurança de hardware baseado no ESP32. Ele combina um autenticador 2FA (TOTP) físico, um cofre de chaves mestras (Seeds) e um sistema de segurança de rede híbrido (IPv4/IPv6). Tudo isso com uma interface temática do Minecraft e gerenciamento total via SD Card e Web.
