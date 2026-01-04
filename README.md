@@ -3,94 +3,81 @@
 ESP32-2432S028R
 
 
-# Creeper Auth v5.2 é um dispositivo de segurança completo: faz o 2FA (TOTP) sincronizado com o tempo global, gerencia suas redes Wi-Fi e IPs de segurança pelo cartão SD, mostra data/hora e ainda serve como um cofre para suas chaves de criptomoedas.
+# 🟢 Creeper Auth v5.5 - Dual Stack & Crypto Vault
+O Creeper Auth v5.5 é um dispositivo de segurança de hardware baseado no ESP32. Ele combina um autenticador 2FA (TOTP) físico, um cofre de chaves mestras (Seeds) e um sistema de segurança de rede híbrido (IPv4/IPv6). Tudo isso com uma interface temática do Minecraft e gerenciamento total via SD Card e Web.
 
-Seu projeto no GitHub vai ficar excelente com essas funcionalidades. É um hardware útil, seguro e muito estiloso com o tema do Minecraft.
+# 🚀 Novidades da Versão 5.5
+Suporte Dual-Stack: Agora opera em IPv4 e IPv6 simultaneamente.
 
-A lgumas dicas para o futuro:
-Backup: Sempre guarde uma cópia do arquivo totp_secrets.txt e seeds.txt do seu SD em um lugar seguro, caso o cartão estrague.
+Whitelist Dinâmica: Novo Agente Python que monitora sua rede e autoriza seu PC automaticamente.
 
-Case: Se você for colocar em uma caixinha, lembre-se de deixar o acesso ao cartão SD livre para facilitar as edições manuais se necessário.
+Cofre de Seeds 3.0: Visualização de frases de recuperação (12/24 palavras) em 3 colunas numeradas no visor.
 
-Atualização: Como você está usando o pool.ntp.org, ele é muito confiável, mas se um dia o relógio parar, verifique apenas a sua conexão com a internet.
+Gestão de Rede via Web: Altere Wi-Fi e IPs de segurança sem precisar mexer no código ou no SD.
 
+Interface Colorida: Sistema de gerenciamento com botões coloridos para evitar exclusões acidentais.
 
-# 🟢 Creeper Auth v5.2 - 2FA & Crypto Vault
-Este é um autenticador de dois fatores (TOTP) físico baseado no ESP32, com tema de Minecraft (Creeper). Ele sincroniza via NTP com o tempo universal (UTC 0) e permite gerenciar tokens e frases de recuperação (Seeds) via interface Web segura.
+# 💻 O Agente de Segurança (Python)
+Para que as funções de Adicionar, Editar e Excluir funcionem, você deve rodar o Agente Python no seu computador. Ele funciona como uma "chave digital" que avisa ao Creeper que você é o dono legítimo do dispositivo.
 
-# 🚀 Funcionalidades
-TOTP 2FA: Gera códigos de 6 dígitos compatíveis com Google, Discord, GitHub, etc.
+# 🛠️ Pré-requisitos do Sistema
+Para o reconhecimento de rede funcionar, o Python precisa de acesso de baixo nível à placa de rede:
 
-Crypto Vault: Espaço seguro para armazenar Seed Phrases (12/24 palavras).
+Instalar Npcap 1.85: * Baixe e instale o Npcap 1.85.
 
-Sincronia Global: Usa NTP para tempo universal, funcionando em qualquer lugar do mundo.
+Importante: Durante a instalação, marque a opção "Install Npcap in WinPcap API-compatible Mode".
 
-Gestão Web: Interface para Adicionar, Deletar e Editar contas e configurações de rede.
+Instalar Python 3.x: Certifique-se de que o Python está no seu PATH.
 
-Segurança de Rede: Bloqueio por IP ou prefixo de rede (Intranet).
+Bibliotecas Python: O script usa bibliotecas nativas, mas para scanners avançados, você pode precisar:
 
-Armazenamento: Tudo é salvo no cartão SD (contas, seeds e Wi-Fi).
+Bash
 
-🛠️ Hardware Necessário
+pip install scapy
+# 🛠️ Hardware Necessário
 ESP32 (30 pinos).
 
-Display TFT 2.4" (Driver ILI9341 ou ST7789).
+Display TFT 2.4" (ILI9341 ou ST7789).
 
-Módulo de Cartão SD (SPI).
+Módulo Cartão Micro SD (SPI).
 
-Cartão Micro SD.
+Cartão Micro SD (Formatado em FAT32).
 
-📚 Bibliotecas Utilizadas
-TFT_eSPI (Configurar o User_Setup.h para o seu display).
+# 📚 Bibliotecas do Arduino (IDE)
+TFT_eSPI: (Configurar User_Setup.h para os pinos do seu display).
 
 NTPClient e WiFiUdp.
 
-ESP32FtpServer (Para acesso remoto aos arquivos do SD).
+ESP32FtpServer: Para acesso remoto aos arquivos.
 
-mbedtls (Nativa do ESP32 para criptografia HMAC-SHA1).
+mbedtls: (Nativa do ESP32).
 
-Dica para os usuários: "Lembre-se de configurar o arquivo config.txt no seu cartão SD com seu Wi-Fi ou use o painel de controle via IP exibido na tela do Creeper."
+# ⚙️ Configuração Inicial
+Insira o cartão SD no PC e crie um arquivo config.txt:
 
-🟢 Creeper Auth: ESP32 TOTP Authenticator
-Creeper Auth é um gerador de tokens de autenticação de dois fatores (2FA) estilo Google Authenticator, construído com um ESP32 e uma tela TFT, tematizado com a estética do Creeper (Minecraft).
+Plaintext
 
-Este dispositivo não apenas gera códigos TOTP (Time-based One-Time Password) para serviços como Discord, GitHub e Gmail, mas também funciona como um mini painel de controle acessível via navegador, protegido por IP.
+SSID=SuaRedeWifi
+PASS=SuaSenha
+MODO=REDE
+IP_ALVO=192.168.100.
+O Creeper iniciará e mostrará o IPv4 e o IPv6 na tela.
 
-🚀 Funcionalidades
-Sincronização em Tempo Real: Utiliza protocolo NTP para garantir que os códigos estejam sempre perfeitamente sincronizados com o horário mundial.
+Execute o script agente_creeper.py no seu PC para liberar o acesso ao painel administrativo.
 
-Interface Minecraft: Visual customizado de um Creeper que muda para os tokens conforme a seleção.
+# 📂 Estrutura de Arquivos no SD
+/config.txt: Armazena Wi-Fi e regras de IP.
 
-Gerenciamento Web Seguro: Interface administrativa via navegador com CSS inspirado no Minecraft (Black & Green).
+/totp_secrets.txt: Armazena tokens (Nome=Secret=Senha).
 
-Segurança por IP: O painel de adição e exclusão de contas só pode ser acessado pelo IP do seu computador pessoal (evitando que intrusos na rede apaguem suas contas).
+/seeds.txt: Armazena frases de recuperação (Nome|Palavras).
 
-Persistência no SD Card: Armazena suas seeds e senhas de forma segura em um cartão MicroSD.
+# 🛡️ Segurança e Dicas
+Backup: O cartão SD é o único lugar onde seus dados moram. Faça cópias periódicas dos arquivos .txt.
 
-Servidor FTP Integrado: Permite gerenciar os arquivos do cartão SD sem precisar removê-lo do ESP32.
+Acesso Negado: Se você vir esta mensagem na Web, certifique-se de que o Agente Python está rodando e que o IP do seu PC foi detectado por ele.
 
-🛠️ Hardware Necessário
-ESP32 (DevKit V1 ou similar).
+Visualização de Seeds: No cofre, as palavras são numeradas de 1 a 24 e organizadas em 3 colunas no display para facilitar a digitação em carteiras como MetaMask ou Ledger.
 
-Display TFT (ILI9341 ou ST7789) utilizando a biblioteca TFT_eSPI.
-
-Módulo de Cartão MicroSD.
-
-Conexão Wi-Fi (para sincronização de tempo e servidor web).
-
-💻 Como Funciona
-O código utiliza a biblioteca mbedtls nativa do ESP32 para realizar cálculos criptográficos HMAC-SHA1. Ele decodifica a chave Base32 fornecida pelos serviços (Discord, Google, etc.) e gera o código de 6 dígitos baseado no tempo UNIX (Epoch).
-
-Visual do Painel Web
-A interface administrativa foi desenhada para parecer um terminal de computador antigo dentro do universo Minecraft: fundo preto profundo, fontes monoespaçadas e detalhes em verde neon.
-
-📥 Instalação
-Clone este repositório.
-
-Configure suas credenciais Wi-Fi e o IP do seu PC no código principal.
-
-Configure o arquivo User_Setup.h da biblioteca TFT_eSPI para os pinos do seu display.
-
-Suba o código para o seu ESP32.
-
-Acesse o IP que aparecerá na tela do Creeper para começar a cadastrar suas contas.
+# 📄 Licença
+Projeto desenvolvido para uso pessoal e entusiastas de segurança e Minecraft. Use com responsabilidade e mantenha seus backups em dia!
