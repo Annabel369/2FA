@@ -148,14 +148,50 @@ void setup() {
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && millis()-start < 10000) delay(500);
 
+  // --- PRINT NO CONSOLE (Monitor Serial) ---
+
+  Serial.println("\n--- REDE CONECTADA ---");
+  Serial.print("IPv4: "); Serial.println(WiFi.localIP());
+  
+  // No Core 3.x, usamos linkLocalIPv6() para o endereço fe80::
+  Serial.print("IPv6: "); Serial.println(WiFi.linkLocalIPv6());
+  Serial.println("-------------------------");
+
   timeClient.begin();
   udpWhitelist.begin(1234);
 
-  auto ehMickey = []() {
+ auto ehMickey = []() {
     String clientIP = server.client().remoteIP().toString();
-    if (dynamicWhitelist.indexOf(clientIP) >= 0) return true;
-    if (cfgMODO == "REDE") return clientIP.startsWith(cfgIP);
-    return clientIP == cfgIP;
+    
+    // 1. Limpa espaços que podem vir do config.txt
+    String cleanCfg = cfgIP;
+    cleanCfg.replace(" ", ""); 
+
+    // 2. LOG NO SERIAL: Isso vai te mostrar quem é o "intruso"
+    Serial.print("Tentativa de login de: [");
+    Serial.print(clientIP);
+    Serial.println("]");
+
+    // 3. Verificação na Whitelist Dinâmica (Python)
+    if (dynamicWhitelist.indexOf(clientIP) >= 0) {
+      Serial.println("Acesso Liberado: Whitelist Dinamica");
+      return true;
+    }
+    
+    // 4. Verificação na Lista Fixa do SD (Aceita vírgulas)
+    if (cleanCfg.indexOf(clientIP) >= 0) {
+      Serial.println("Acesso Liberado: Lista Fixa SD");
+      return true;
+    }
+
+    // 5. Verificação de Prefixo (Modo REDE)
+    if (cfgMODO == "REDE" && clientIP.startsWith(cfgIP)) {
+      Serial.println("Acesso Liberado: Prefixo de Rede");
+      return true;
+    }
+
+    Serial.println("!!! ACESSO NEGADO !!!");
+    return false;
   };
 
   String css = "<style>body{background:#000;color:#0f0;font-family:monospace;text-align:center;} .box{border:2px solid #0f0;padding:20px;display:inline-block;margin-top:20px;width:320px;} a{color:#0f0;text-decoration:none;border:1px solid #0f0;padding:5px;margin:3px;display:inline-block;} .edit{color:#ff0;border-color:#ff0;} .del{color:#f00;border-color:#f00;} input,select{background:#111;color:#0f0;border:1px solid #0f0;padding:8px;width:100%;margin:5px 0;box-sizing:border-box;}</style>";
