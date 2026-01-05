@@ -9,73 +9,79 @@ import re
 ESP32_IP = "192.168.100.49" 
 UDP_PORT = 1234
 JSON_FILE = "permitidos.json"
-LOG_FILE = "agente_log.txt"
+LOG_DIR = "logs"
+DIAS_PARA_MANTER = 7
 
-def log_status(mensagem):
+# Variável para evitar logs repetidos (Memória do Agente)
+ultima_whitelist = ""
+
+def log_status(mensagem, forcar=False):
+    """Gera logs apenas se houver mudança ou se for forçado."""
+    if not os.path.exists(LOG_DIR): os.makedirs(LOG_DIR)
+    
+    data_atual = time.strftime("%d-%m-%Y")
+    nome_arquivo = os.path.join(LOG_DIR, f"log_{data_atual}.txt")
     timestamp = time.strftime("%d/%m/%Y %H:%M:%S")
+    linha_log = f"[{timestamp}] {mensagem}\n"
+    
     try:
-        with open(LOG_FILE, "a") as f:
-            f.write(f"[{timestamp}] {mensagem}\n")
+        with open(nome_arquivo, "a", encoding="utf-8") as f:
+            f.write(linha_log)
     except: pass
+    
     print(f"[{timestamp}] {mensagem}", flush=True)
 
 def get_network_tables():
-    """ Captura tanto a tabela ARP (IPv4) quanto a Neighbors (IPv6) """
-    ips_encontrados = [] # Lista de tuplas (ip, mac)
-    
+    ips_encontrados = [] 
     try:
-        # 1. PEGAR IPv4 (ARP)
         arp_out = subprocess.check_output("arp -a", shell=True).decode('cp850')
         ips_encontrados.extend(re.findall(r"(\d+\.\d+\.\d+\.\d+)\s+([0-9a-fA-F-]{17})", arp_out))
-        
-        # 2. PEGAR IPv6 (Neighbors)
         ipv6_out = subprocess.check_output("netsh interface ipv6 show neighbors", shell=True).decode('cp850')
-        # Procura por IPs que começam com fe80 ou 2804 e o respectivo MAC
         ips_encontrados.extend(re.findall(r"([0-9a-fA-F:]+)\s+([0-9a-fA-F-]{17})", ipv6_out))
-        
-    except Exception as e:
-        log_status(f"Erro ao ler tabelas de rede: {e}")
-    
+    except: pass
     return ips_encontrados
 
 def scan_e_enviar():
+    global ultima_whitelist
     if not os.path.exists(JSON_FILE): return
     
-    with open(JSON_FILE) as f:
-        config = json.load(f)
+    try:
+        with open(JSON_FILE) as f: config = json.load(f)
+    except: return
     
     macs_autorizados = [d['mac'].lower().replace(':', '').replace('-', '') for d in config['dispositivos']]
-    
     tabela_geral = get_network_tables()
-    ips_para_liberar = []
+    ips_atuais = []
 
     for ip, mac in tabela_geral:
         mac_limpo = mac.lower().replace('-', '').replace(':', '')
         if mac_limpo in macs_autorizados:
-            if ip not in ips_para_liberar:
-                ips_para_liberar.append(ip)
-                # Oculta logs repetitivos, mas registra a autorização
-                if ":" in ip: # É um IPv6
-                    log_status(f"Detectado IPv6 Autorizado: {ip}")
-                else:
-                    log_status(f"Detectado IPv4 Autorizado: {ip}")
+            if ip not in ips_atuais:
+                ips_atuais.append(ip)
 
-    if ips_para_liberar:
-        # Criamos uma string única com todos os IPs v4 e v6 separados por vírgula
-        msg = ",".join(ips_para_liberar)
+    ips_atuais.sort() # Ordena para comparar as strings
+    whitelist_string = ",".join(ips_atuais)
+
+    # --- LÓGICA DE SILÊNCIO ---
+    if whitelist_string != ultima_whitelist:
+        # Houve mudança! Alguém entrou ou saiu.
+        if whitelist_string == "":
+            log_status("ALERTA: Nenhum dispositivo autorizado detectado na rede!")
+        else:
+            log_status(f"MUDANÇA NA REDE: IPs Autorizados agora: {whitelist_string}")
         
-        # Enviamos via IPv4 para o IP fixo do ESP32
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(msg.encode(), (ESP32_IP, UDP_PORT))
-        log_status(f"Whitelist Dual-Stack enviada ({len(ips_para_liberar)} IPs)")
-    else:
-        log_status("Nenhum dispositivo autorizado encontrado na rede.")
+        ultima_whitelist = whitelist_string
+    
+    # O envio UDP continua acontecendo sempre para garantir o ESP32 atualizado
+    if whitelist_string:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.sendto(whitelist_string.encode(), (ESP32_IP, UDP_PORT))
+        except: pass
 
-# --- EXECUÇÃO ---
 if __name__ == "__main__":
-    # Garante que o script rode na pasta correta para achar o JSON
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    log_status("=== AGENTE CREEPER V2.5 (IPv4/IPv6) INICIADO ===")
+    log_status("=== AGENTE CREEPER V2.9 (MODO INTELIGENTE) INICIADO ===", forcar=True)
     
     while True:
         scan_e_enviar()
