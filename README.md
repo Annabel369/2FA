@@ -96,3 +96,6 @@ ou tapar acesso a todos da intranet da casa ou empresa
 
 # 📄 Licença
 Projeto desenvolvido para uso pessoal e entusiastas de segurança e Minecraft. Use com responsabilidade e mantenha seus backups em dia!
+
+<img width="1109" height="970" alt="image" src="https://github.com/user-attachments/assets/80c89aca-2570-4485-b574-4aa815d71cb5" />
+
