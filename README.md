@@ -85,5 +85,14 @@ Acesso Negado: Se você vir esta mensagem na Web, certifique-se de que o Agente 
 
 Visualização de Seeds: No cofre, as palavras são numeradas de 1 a 24 e organizadas em 3 colunas no display para facilitar a digitação em carteiras como MetaMask ou Ledger.
 
+<img width="629" height="589" alt="image" src="https://github.com/user-attachments/assets/243d8eeb-8935-4c58-8e77-f56b20226d0e" />
+exemplo 192.168.100.38,192.168.100.190,aa80::aa94:32aa:e867:623
+
+ou tapar acesso a todos da intranet da casa ou empresa
+
+<img width="391" height="466" alt="image" src="https://github.com/user-attachments/assets/8397a82f-05fd-4969-8b73-1cd4b8710e93" />
+
+
+
 # 📄 Licença
 Projeto desenvolvido para uso pessoal e entusiastas de segurança e Minecraft. Use com responsabilidade e mantenha seus backups em dia!
