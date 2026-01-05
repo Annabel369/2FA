@@ -1,4 +1,4 @@
-// ===== CREEPER AUTH v5.5 - DUAL STACK + NETWORK + SEED COLUMNS =====
+// ===== CREEPER AUTH v5.5 - DUAL STACK + NETWORK + SEED COLUMNS (VERSÃO FINAL) =====
 #include <WiFi.h>
 #include <TFT_eSPI.h>
 #include <SPI.h>
@@ -63,7 +63,6 @@ void carregarTudo() {
     }
     f.close();
   }
-  // Carregar Tokens
   accounts.clear();
   File f2 = SD.open("/totp_secrets.txt", FILE_READ);
   if (f2) {
@@ -74,7 +73,6 @@ void carregarTudo() {
     }
     f2.close();
   }
-  // Carregar Seeds
   seeds.clear();
   File fs = SD.open("/seeds.txt", FILE_READ);
   if (fs) {
@@ -179,7 +177,7 @@ void setup() {
 
   server.on("/manage", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<html><head>"+css+"</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
+    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
     for(int i=0; i<accounts.size(); i++) {
       h += "<div style='margin-bottom:10px;'>" + accounts[i].name + " <br>";
       h += "<a href='/edit?id="+String(i)+"' class='edit'>[E] EDITAR</a> ";
@@ -189,11 +187,30 @@ void setup() {
     server.send(200, "text/html", h);
   });
 
+  // --- NOVA ROTA: FORMULÁRIO PARA ADICIONAR ---
+  server.on("/add", [css, ehMickey](){
+    if(!ehMickey()) return server.send(403, "Negado");
+    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>NOVO TOKEN</h2><form method='POST' action='/reg'>";
+    h += "NOME (Ex: Discord):<input name='u'>SECRET (Base32):<input name='s'>SENHA (Opcional):<input name='p'><input type='submit' value='CRIAR TOKEN'></form><br><a href='/manage'>VOLTAR</a></div></body></html>";
+    server.send(200, "text/html", h);
+  });
+
+  // --- NOVA ROTA: REGISTRAR NO SD ---
+  server.on("/reg", HTTP_POST, [ehMickey](){
+    if(ehMickey()){
+      String s = server.arg("s"); s.toUpperCase(); s.replace(" ", "");
+      accounts.push_back({server.arg("u"), s, server.arg("p")});
+      File f = SD.open("/totp_secrets.txt", FILE_APPEND); 
+      if(f) { f.println(server.arg("u") + "=" + s + "=" + server.arg("p")); f.close(); }
+      server.send(200, "text/html", "<script>location.href='/manage';</script>");
+    }
+  });
+
   server.on("/edit", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
     int id = server.arg("id").toInt();
     TotpAccount acc = accounts[id];
-    String h = "<html><head>"+css+"</head><body><div class='box'><h2>EDITAR TOKEN</h2><form method='POST' action='/update?id="+String(id)+"'>";
+    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>EDITAR TOKEN</h2><form method='POST' action='/update?id="+String(id)+"'>";
     h += "NOME:<input name='u' value='"+acc.name+"'>SECRET:<input name='s' value='"+acc.secretBase32+"'>PASS:<input name='p' value='"+acc.password+"'><input type='submit' value='SALVAR ALTERAÇÕES'></form></div></body></html>";
     server.send(200, "text/html", h);
   });
@@ -212,7 +229,7 @@ void setup() {
 
   server.on("/network", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<html><head>"+css+"</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' action='/net_save'>";
+    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' action='/net_save'>";
     h += "SSID:<input name='ss' value='"+cfgSSID+"'>PASS:<input name='pw' value='"+cfgPASS+"'>";
     h += "MODO:<select name='mo'><option value='REDE' "+(String(cfgMODO=="REDE"?"selected":""))+">REDE (Prefixo)</option>";
     h += "<option value='UNICO' "+(String(cfgMODO=="UNICO"?"selected":""))+">IP UNICO</option></select>";
@@ -227,10 +244,9 @@ void setup() {
     }
   });
 
-  // --- Rotas Seed (Vault) ---
   server.on("/vault", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<html><head>"+css+"</head><body><div class='box'><h2>CRYPTO VAULT</h2>";
+    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>CRYPTO VAULT</h2>";
     for(int i=0; i<seeds.size(); i++) h += "<b>"+seeds[i].label+"</b> <a href='/view_seed?id="+String(i)+"'>VER</a> <a href='/del_seed?id="+String(i)+"' class='del'>X</a><br>";
     h += "<hr><form method='POST' action='/reg_seed'>NOME:<input name='n'>SEED:<input name='s'><input type='submit' value='ADD SEED'></form><br><a href='/'>VOLTAR</a></div></body></html>";
     server.send(200, "text/html", h);
@@ -296,7 +312,6 @@ void loop() {
   if (secondsLeft != lastSec || forceRedraw) {
     if (forceRedraw) { tft.fillScreen(TFT_BLACK); forceRedraw = false; }
     
-    // --- DISPLAY SEED (3 COLUNAS) ---
     if (currentSeedIndex >= 0) {
       tft.fillScreen(TFT_BLACK);
       tft.setTextColor(TFT_ORANGE); tft.drawCentreString(seeds[currentSeedIndex].label, 120, 10, 2);
@@ -313,7 +328,7 @@ void loop() {
 
       tft.setTextSize(1);
       for(int i=0; i<wordCount; i++) {
-        int col = i / 8; // 3 colunas de 8 palavras
+        int col = i / 8; 
         int row = i % 8;
         int x = 10 + (col * 80);
         int y = 45 + (row * 22);
