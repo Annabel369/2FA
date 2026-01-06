@@ -19,6 +19,12 @@ Fonte: https://randomnerdtutorials.com/lvgl-cheap-yellow-display-esp32-2432s028r
 
 
 
+https://github.com/Annabel369/PanelMinecraft/blob/main/User_Setup.h
+#Copy the User_Setup.h file provided earlier and replace the existing file.
+<img width="786" height="675" alt="image" src="https://github.com/user-attachments/assets/77f1cb7a-b2fc-4b38-a4ad-369ca865f97d" />
+
+
+
 # 🟢 Creeper Auth v5.5 - Dual Stack & Crypto Vault
 O Creeper Auth v5.5 é um dispositivo de segurança de hardware baseado no ESP32. Ele combina um autenticador 2FA (TOTP) físico, um cofre de chaves mestras (Seeds) e um sistema de segurança de rede híbrido (IPv4/IPv6). Tudo isso com uma interface temática do Minecraft e gerenciamento total via SD Card e Web.
 
