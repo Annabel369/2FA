@@ -10,6 +10,14 @@ https://github.com/user-attachments/assets/b97c8798-70a3-4e39-a5d2-1c58f077c853
 https://github.com/Annabel369/ESP32FTPServer
 
 
+Arquivo de configuração para a biblioteca TFT_eSPI. Precisa ser colocado no diretório onde a biblioteca está instalada.
+
+lv_conf.h
+Arquivo de configuração da biblioteca LVGL. Precisa ser colocado no diretório de bibliotecas do Arduino.
+
+Fonte: https://randomnerdtutorials.com/lvgl-cheap-yellow-display-esp32-2432s028r/
+
+
 
 # 🟢 Creeper Auth v5.5 - Dual Stack & Crypto Vault
 O Creeper Auth v5.5 é um dispositivo de segurança de hardware baseado no ESP32. Ele combina um autenticador 2FA (TOTP) físico, um cofre de chaves mestras (Seeds) e um sistema de segurança de rede híbrido (IPv4/IPv6). Tudo isso com uma interface temática do Minecraft e gerenciamento total via SD Card e Web.
