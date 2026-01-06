@@ -6,6 +6,9 @@ ESP32-2432S028R
 
 https://github.com/user-attachments/assets/b97c8798-70a3-4e39-a5d2-1c58f077c853
 
+# dependencie 
+https://github.com/Annabel369/ESP32FTPServer
+
 
 
 # 🟢 Creeper Auth v5.5 - Dual Stack & Crypto Vault
