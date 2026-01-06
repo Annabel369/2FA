@@ -194,39 +194,74 @@ void setup() {
     return false;
   };
 
-  String css = "<style>body{background:#000;color:#0f0;font-family:monospace;text-align:center;} .box{border:2px solid #0f0;padding:20px;display:inline-block;margin-top:20px;width:320px;} a{color:#0f0;text-decoration:none;border:1px solid #0f0;padding:5px;margin:3px;display:inline-block;} .edit{color:#ff0;border-color:#ff0;} .del{color:#f00;border-color:#f00;} input,select{background:#111;color:#0f0;border:1px solid #0f0;padding:8px;width:100%;margin:5px 0;box-sizing:border-box;}</style>";
+  String css = R"rawliteral(
+<style>
+  body{background:#000;color:#0f0;font-family:monospace;text-align:center;margin:0;}
+  footer{margin-top:40px;font-size:0.85em;color:#666;}
+  .box{border:2px solid #0f0;padding:20px;display:inline-block;margin-top:20px;width:320px;}
+  a{color:#0f0;text-decoration:none;border:1px solid #0f0;padding:5px;margin:3px;display:inline-block;}
+  .edit{color:#ff0;border-color:#ff0;}
+  .del{color:#f00;border-color:#f00;}
+  input,select{background:#111;color:#0f0;border:1px solid #0f0;padding:8px;width:100%;margin:5px 0;box-sizing:border-box;}
+  #creeper-container{width:120px;height:120px;position:relative;margin:20px auto; display:block;} /* Centralizei com margin: auto */
+  #creeper-body{width:100%;height:100%;background-color:#00FF00;position:absolute;}
+  .pixel{background-color:#000;position:absolute;width:10px;height:10px;}
+</style>
+)rawliteral";
 
   // --- Rotas ---
-  server.on("/", [css, ehMickey](){
-    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>CREEPER AUTH v5.5</h2>";
+  server.on("/", [css, ehMickey]() {
+    // Cabeçalho e CSS
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><meta charset='UTF-8'>" + css + "</head><body>";
+    
+    h += "<div class='box'>";
+    
+    // --- SEU NOVO BLOCO DO CREEPER ---
+    h += "<div id='creeper-container'>";
+    h += "<div id='creeper-body'></div>";
+    h += "<div class='pixel' style='left: 30px; top: 10px;'></div><div class='pixel' style='left: 40px; top: 10px;'></div><div class='pixel' style='left: 70px; top: 10px;'></div><div class='pixel' style='left: 80px; top: 10px;'></div>";
+    h += "<div class='pixel' style='left: 20px; top: 20px;'></div><div class='pixel' style='left: 30px; top: 20px;'></div><div class='pixel' style='left: 40px; top: 20px;'></div><div class='pixel' style='left: 70px; top: 20px;'></div><div class='pixel' style='left: 80px; top: 20px;'></div><div class='pixel' style='left: 90px; top: 20px;'></div>";
+    h += "<div class='pixel' style='left: 20px; top: 30px;'></div><div class='pixel' style='left: 30px; top: 30px;'></div><div class='pixel' style='left: 40px; top: 30px;'></div><div class='pixel' style='left: 70px; top: 30px;'></div><div class='pixel' style='left: 80px; top: 30px;'></div><div class='pixel' style='left: 90px; top: 30px;'></div>";
+    h += "<div class='pixel' style='left: 50px; top: 50px;'></div><div class='pixel' style='left: 60px; top: 50px;'></div>";
+    h += "<div class='pixel' style='left: 30px; top: 60px;'></div><div class='pixel' style='left: 40px; top: 60px;'></div><div class='pixel' style='left: 50px; top: 60px;'></div><div class='pixel' style='left: 60px; top: 60px;'></div><div class='pixel' style='left: 70px; top: 60px;'></div><div class='pixel' style='left: 80px; top: 60px;'></div>";
+    h += "<div class='pixel' style='left: 30px; top: 70px;'></div><div class='pixel' style='left: 40px; top: 70px;'></div><div class='pixel' style='left: 50px; top: 70px;'></div><div class='pixel' style='left: 60px; top: 70px;'></div><div class='pixel' style='left: 70px; top: 70px;'></div><div class='pixel' style='left: 80px; top: 70px;'></div>";
+    h += "<div class='pixel' style='left: 30px; top: 80px;'></div><div class='pixel' style='left: 40px; top: 80px;'></div><div class='pixel' style='left: 50px; top: 80px;'></div><div class='pixel' style='left: 60px; top: 80px;'></div><div class='pixel' style='left: 70px; top: 80px;'></div><div class='pixel' style='left: 80px; top: 80px;'></div>";
+    h += "<div class='pixel' style='left: 30px; top: 90px;'></div><div class='pixel' style='left: 40px; top: 90px;'></div><div class='pixel' style='left: 70px; top: 90px;'></div><div class='pixel' style='left: 80px; top: 90px;'></div>";
+    h += "<div class='pixel' style='left: 30px; top: 100px;'></div><div class='pixel' style='left: 40px; top: 100px;'></div><div class='pixel' style='left: 70px; top: 100px;'></div><div class='pixel' style='left: 80px; top: 100px;'></div>";
+    h += "</div>"; 
+    // ------------------------------------
+
+    h += "<h2>CREEPER AUTH v5.5</h2>";
     h += "<form action='/select'><select name='id'><option value='-1'>VISOR CREEPER</option>";
     for(int i=0; i<accounts.size(); i++) h += "<option value='"+String(i)+"'>"+accounts[i].name+"</option>";
     h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
+
     if(ehMickey()) {
       h += "<a href='/vault'>VAULT</a> <a href='/manage'>TOKENS</a><br><a href='/network'>WI-FI & IP</a>";
     } else {
       h += "<p style='color:red'>ACESSO NEGADO: IP PROTEGIDO</p>";
     }
-    h += "</div></body></html>";
+
+    h += "</div><footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com apoio da Gemini. https://github.com/Annabel369/2FA</footer></body></html>";
     server.send(200, "text/html", h);
-  });
+});
 
   server.on("/manage", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'>><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
     for(int i=0; i<accounts.size(); i++) {
       h += "<div style='margin-bottom:10px;'>" + accounts[i].name + " <br>";
       h += "<a href='/edit?id="+String(i)+"' class='edit'>[E] EDITAR</a> ";
       h += "<a href='/del?id="+String(i)+"' class='del'>[X] EXCLUIR</a></div>";
     }
-    h += "<hr><a href='/add'>+ NOVO TOKEN</a><br><a href='/'>VOLTAR</a></div></body></html>";
+    h += "<hr><a href='/add'>+ NOVO TOKEN</a><br><a href='/'>VOLTAR</a></div><footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com apoio da Gemini. https://github.com/Annabel369/2FA</footer></body></html>";
     server.send(200, "text/html", h);
   });
 
   // --- NOVA ROTA: FORMULÁRIO PARA ADICIONAR ---
   server.on("/add", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>NOVO TOKEN</h2><form method='POST' action='/reg'>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>NOVO TOKEN</h2><form method='POST' action='/reg'>";
     h += "NOME (Ex: Discord):<input name='u'>SECRET (Base32):<input name='s'>SENHA (Opcional):<input name='p'><input type='submit' value='CRIAR TOKEN'></form><br><a href='/manage'>VOLTAR</a></div></body></html>";
     server.send(200, "text/html", h);
   });
@@ -246,7 +281,7 @@ void setup() {
     if(!ehMickey()) return server.send(403, "Negado");
     int id = server.arg("id").toInt();
     TotpAccount acc = accounts[id];
-    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>EDITAR TOKEN</h2><form method='POST' action='/update?id="+String(id)+"'>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>EDITAR TOKEN</h2><form method='POST' action='/update?id="+String(id)+"'>'";
     h += "NOME:<input name='u' value='"+acc.name+"'>SECRET:<input name='s' value='"+acc.secretBase32+"'>PASS:<input name='p' value='"+acc.password+"'><input type='submit' value='SALVAR ALTERAÇÕES'></form></div></body></html>";
     server.send(200, "text/html", h);
   });
@@ -265,11 +300,11 @@ void setup() {
 
   server.on("/network", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' action='/net_save'>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' action='/net_save'>";
     h += "SSID:<input name='ss' value='"+cfgSSID+"'>PASS:<input name='pw' value='"+cfgPASS+"'>";
     h += "MODO:<select name='mo'><option value='REDE' "+(String(cfgMODO=="REDE"?"selected":""))+">REDE (Prefixo)</option>";
     h += "<option value='UNICO' "+(String(cfgMODO=="UNICO"?"selected":""))+">IP UNICO</option></select>";
-    h += "IP/PREFIXO:<input name='ip' value='"+cfgIP+"'><input type='submit' value='SALVAR E REINICIAR'></form><br><a href='/'>VOLTAR</a></div></body></html>";
+    h += "IP/PREFIXO:<input name='ip' value='"+cfgIP+"'><input type='submit' value='SALVAR E REINICIAR'></form><br><a href='/'>VOLTAR</a></div><footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com apoio da Gemini. https://github.com/Annabel369/2FA</footer></body></html>";
     server.send(200, "text/html", h);
   });
 
