@@ -23,6 +23,10 @@ https://github.com/Annabel369/PanelMinecraft/blob/main/User_Setup.h
 #Copy the User_Setup.h file provided earlier and replace the existing file.
 <img width="786" height="675" alt="image" src="https://github.com/user-attachments/assets/77f1cb7a-b2fc-4b38-a4ad-369ca865f97d" />
 
+Procura algum projeto de impressoar 3d que simule o projeto original do creeper do Cinepolis 
+
+https://www.crealitycloud.com/pt/model-detail/minecraft-creeper-printing-model?source=5
+
 
 
 # 🟢 Creeper Auth v5.5 - Dual Stack & Crypto Vault
