@@ -156,6 +156,9 @@ void setup() {
   // No Core 3.x, usamos linkLocalIPv6() para o endereço fe80::
   Serial.print("IPv6: "); Serial.println(WiFi.linkLocalIPv6());
   Serial.println("-------------------------");
+  Serial.println("FTP PORTA 21 User: creeper, Pass: 1234");
+  Serial.println("ftp://creeper:1234@192.168.100.49/");
+  Serial.println("-------------------------");
 
   timeClient.begin();
   udpWhitelist.begin(1234);
