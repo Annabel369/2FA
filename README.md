@@ -94,6 +94,15 @@ ou tapar acesso a todos da intranet da casa ou empresa
 
 <img width="391" height="466" alt="image" src="https://github.com/user-attachments/assets/8397a82f-05fd-4969-8b73-1cd4b8710e93" />
 
+# FTP Acesso voce consegue guardar coisas e apaga e tira (mas nao tem acesso aos arquivos Originais gerado pelo sistema
+
+
+
+ftp://creeper:1234@192.168.100.49/
+
+<img width="1191" height="327" alt="image" src="https://github.com/user-attachments/assets/c1a8d30b-6931-47af-a48e-48e8c2db86a6" />
+
+
 
 
 # 📄 Licença
