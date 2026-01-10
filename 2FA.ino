@@ -154,20 +154,78 @@ String calcTOTP(const String& secret, unsigned long epoch) {
   return String(buf);
 }
 
-// --- Interface Visor ---
+// --- Interface Visor Atualizada ---
+
 void drawCreeper() {
-  tft.fillRect(60, 40, 120, 120, TFT_GREEN);
-  tft.fillRect(80, 60, 25, 25, TFT_BLACK); tft.fillRect(135, 60, 25, 25, TFT_BLACK);
-  tft.fillRect(105, 85, 30, 40, TFT_BLACK); tft.fillRect(90, 110, 60, 35, TFT_BLACK);
+  // Centraliza o rosto: x=60, y=40, tamanho=120
+  // Isso mantém a simetria com o resto das informações na tela
+  drawCustomCreeper(60, 40, 120); 
+}
+
+void drawCustomCreeper(int x, int y, int tam) {
+    int pixelSize = tam / 12; // Se tam for 120, o pixel será 10x10
+    
+    // Desenha o fundo verde (Base)
+    tft.fillRect(x, y, tam, tam, TFT_GREEN); 
+    
+    // Pixels Pretos (O desenho exato da sua Web)
+    // Olhos
+    tft.fillRect(x + 30, y + 10, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 40, y + 10, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 70, y + 10, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 80, y + 10, pixelSize, pixelSize, TFT_BLACK);
+    
+    tft.fillRect(x + 20, y + 20, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 30, y + 20, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 40, y + 20, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 70, y + 20, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 80, y + 20, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 90, y + 20, pixelSize, pixelSize, TFT_BLACK);
+    
+    tft.fillRect(x + 20, y + 30, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 30, y + 30, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 40, y + 30, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 70, y + 30, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 80, y + 30, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 90, y + 30, pixelSize, pixelSize, TFT_BLACK);
+
+    // Nariz/Ponte
+    tft.fillRect(x + 50, y + 50, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 60, y + 50, pixelSize, pixelSize, TFT_BLACK);
+
+    // Boca (Parte superior e meio)
+    for(int i = 60; i <= 80; i += 10) {
+        tft.fillRect(x + 30, y + i, pixelSize, pixelSize, TFT_BLACK);
+        tft.fillRect(x + 40, y + i, pixelSize, pixelSize, TFT_BLACK);
+        tft.fillRect(x + 50, y + i, pixelSize, pixelSize, TFT_BLACK);
+        tft.fillRect(x + 60, y + i, pixelSize, pixelSize, TFT_BLACK);
+        tft.fillRect(x + 70, y + i, pixelSize, pixelSize, TFT_BLACK);
+        tft.fillRect(x + 80, y + i, pixelSize, pixelSize, TFT_BLACK);
+    }
+
+    // "Pés" da boca (Laterais inferiores)
+    tft.fillRect(x + 30, y + 90, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 40, y + 90, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 70, y + 90, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 80, y + 90, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 30, y + 100, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 40, y + 100, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 70, y + 100, pixelSize, pixelSize, TFT_BLACK);
+    tft.fillRect(x + 80, y + 100, pixelSize, pixelSize, TFT_BLACK);
 }
 
 void drawInfo(unsigned long epoch) {
   time_t rawtime = (time_t)epoch;
   struct tm * ti = gmtime(&rawtime);
   char f_time[20];
+  
+  // Ajuste para Horário de Brasília (UTC-3)
   sprintf(f_time, "%02d/%02d %02d:%02d", ti->tm_mday, ti->tm_mon + 1, (ti->tm_hour + 21)%24, ti->tm_min);
+  
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   tft.drawCentreString(f_time, 120, 175, 2);
+  
+  // Mostra o IP em Verde Matrix no visor
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.drawCentreString(WiFi.localIP().toString(), 120, 215, 2);
 }
