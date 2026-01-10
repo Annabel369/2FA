@@ -1,5 +1,6 @@
 // ===== CREEPER AUTH v5.5 - DUAL STACK + NETWORK + SEED COLUMNS (VERSÃO FINAL) =====
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <FS.h>
@@ -37,6 +38,23 @@ int currentIndex = -1;
 int currentSeedIndex = -1; 
 int lastSec = -1;
 bool forceRedraw = true;
+
+
+WiFiClientSecure client;
+
+void setupTLS() {
+  File cert = SD.open("/certs/public.pem");
+  File key  = SD.open("/certs/private.pem");
+
+  if (cert && key) {
+    client.setCertificate(cert.readString().c_str());
+    client.setPrivateKey(key.readString().c_str());
+  }
+
+  cert.close();
+  key.close();
+}
+
 
 // --- Gestão de Arquivos ---
 void salvarConfig() {
