@@ -2,87 +2,109 @@ import os
 import json
 import socket
 import time
-import subprocess
 import re
 
 # --- CONFIGURAÇÃO ---
-ESP32_IP = "192.168.100.49" 
-UDP_PORT = 1234
-JSON_FILE = "permitidos.json"
-LOG_DIR = "logs"
-DIAS_PARA_MANTER = 7
+ROTEADOR_IP = "192.168.100.1"
+ROTEADOR_USER = b"root\n"
+ROTEADOR_PASS = b"admin\n"
+DB_FILE = "dispositivos_conhecidos.json"
+LOG_FILE = "agente_log.txt"
 
-# Variável para evitar logs repetidos (Memória do Agente)
-ultima_whitelist = ""
-
-def log_status(mensagem, forcar=False):
-    """Gera logs apenas se houver mudança ou se for forçado."""
-    if not os.path.exists(LOG_DIR): os.makedirs(LOG_DIR)
-    
-    data_atual = time.strftime("%d-%m-%Y")
-    nome_arquivo = os.path.join(LOG_DIR, f"log_{data_atual}.txt")
+def log_status(mensagem):
     timestamp = time.strftime("%d/%m/%Y %H:%M:%S")
-    linha_log = f"[{timestamp}] {mensagem}\n"
-    
-    try:
-        with open(nome_arquivo, "a", encoding="utf-8") as f:
-            f.write(linha_log)
-    except: pass
-    
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(f"[{timestamp}] {mensagem}\n")
     print(f"[{timestamp}] {mensagem}", flush=True)
 
-def get_network_tables():
-    ips_encontrados = [] 
+def carregar_db():
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def salvar_db(db):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(db, f, indent=4, ensure_ascii=False)
+
+def get_router_data():
+    """ Captura IP, MAC e tenta buscar o Nome (Hostname) """
+    encontrados = []
     try:
-        arp_out = subprocess.check_output("arp -a", shell=True).decode('cp850')
-        ips_encontrados.extend(re.findall(r"(\d+\.\d+\.\d+\.\d+)\s+([0-9a-fA-F-]{17})", arp_out))
-        ipv6_out = subprocess.check_output("netsh interface ipv6 show neighbors", shell=True).decode('cp850')
-        ips_encontrados.extend(re.findall(r"([0-9a-fA-F:]+)\s+([0-9a-fA-F-]{17})", ipv6_out))
-    except: pass
-    return ips_encontrados
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(10)
+        s.connect((ROTEADOR_IP, 23))
+        time.sleep(1)
+        s.sendall(ROTEADOR_USER)
+        time.sleep(1)
+        s.sendall(ROTEADOR_PASS)
+        time.sleep(1)
 
-def scan_e_enviar():
-    global ultima_whitelist
-    if not os.path.exists(JSON_FILE): return
-    
-    try:
-        with open(JSON_FILE) as f: config = json.load(f)
-    except: return
-    
-    macs_autorizados = [d['mac'].lower().replace(':', '').replace('-', '') for d in config['dispositivos']]
-    tabela_geral = get_network_tables()
-    ips_atuais = []
+        # Pegamos primeiro a tabela ARP/Neighbor (IP e MAC)
+        s.sendall(b"display ip neigh\n\n\n\n")
+        time.sleep(2)
+        raw_neigh = s.recv(32768).decode('ascii', errors='ignore')
 
-    for ip, mac in tabela_geral:
-        mac_limpo = mac.lower().replace('-', '').replace(':', '')
-        if mac_limpo in macs_autorizados:
-            if ip not in ips_atuais:
-                ips_atuais.append(ip)
+        # Pegamos a tabela DHCP para tentar achar o NOME do dispositivo
+        s.sendall(b"display dhcp server user all\n\n\n\n")
+        time.sleep(3)
+        raw_dhcp = s.recv(32768).decode('ascii', errors='ignore')
+        s.close()
 
-    ips_atuais.sort() # Ordena para comparar as strings
-    whitelist_string = ",".join(ips_atuais)
+        # 1. Extrair Nomes do DHCP (Dicionário {MAC: Nome})
+        nomes_map = {}
+        dhcp_matches = re.findall(r"(\d+\.\d+\.\d+\.\d+)\s+([\w-]+|--)\s+([0-9a-f:]{17})", raw_dhcp)
+        for ip, nome, mac in dhcp_matches:
+            nomes_map[mac.lower()] = nome if nome != "--" else "Desconhecido"
 
-    # --- LÓGICA DE SILÊNCIO ---
-    if whitelist_string != ultima_whitelist:
-        # Houve mudança! Alguém entrou ou saiu.
-        if whitelist_string == "":
-            log_status("ALERTA: Nenhum dispositivo autorizado detectado na rede!")
-        else:
-            log_status(f"MUDANÇA NA REDE: IPs Autorizados agora: {whitelist_string}")
+        # 2. Extrair IPs e MACs da tabela Neighbor
+        neigh_matches = re.findall(r"([0-9a-fA-F:]{17})\s+([0-9a-fA-F.:]+)", raw_neigh)
         
-        ultima_whitelist = whitelist_string
-    
-    # O envio UDP continua acontecendo sempre para garantir o ESP32 atualizado
-    if whitelist_string:
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(whitelist_string.encode(), (ESP32_IP, UDP_PORT))
-        except: pass
+        for mac, ip in neigh_matches:
+            mac_l = mac.lower()
+            nome = nomes_map.get(mac_l, "Desconhecido")
+            if ip != "--" and ip != ROTEADOR_IP:
+                encontrados.append({"mac": mac_l, "ip": ip, "nome": nome})
+
+    except Exception as e:
+        log_status(f"Erro no Roteador: {e}")
+    return encontrados
+
+def monitorar():
+    db = carregar_db()
+    log_status("=== MONITORAMENTO INICIADO (SCAN DIRETO) ===")
+
+    while True:
+        dispositivos_atuais = get_router_data()
+        houve_mudanca = False
+
+        for dev in dispositivos_atuais:
+            mac = dev['mac']
+            ip = dev['ip']
+            nome = dev['nome']
+
+            # Se o MAC não existe no banco, é um OBJETO NOVO
+            if mac not in db:
+                log_status(f"⚠️ NOVO DISPOSITIVO: [{nome}] | MAC: {mac} | IP: {ip}")
+                db[mac] = {
+                    "nome": nome,
+                    "primeira_vez": time.strftime("%d/%m/%Y %H:%M:%S"),
+                    "ultimo_ip": ip,
+                    "historico_ips": [ip]
+                }
+                houve_mudanca = True
+            else:
+                # Se o MAC já existe, mas mudou o IP ou o Nome, atualizamos
+                if ip not in db[mac]["historico_ips"]:
+                    db[mac]["historico_ips"].append(ip)
+                    db[mac]["ultimo_ip"] = ip
+                    log_status(f"ℹ️ IP Alterado: {nome} ({mac}) agora está em {ip}")
+                    houve_mudanca = True
+
+        if houve_mudanca:
+            salvar_db(db)
+        
+        time.sleep(30)
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    log_status("=== AGENTE CREEPER V2.9 (MODO INTELIGENTE) INICIADO ===", forcar=True)
-    
-    while True:
-        scan_e_enviar()
-        time.sleep(15)
+    monitorar()
