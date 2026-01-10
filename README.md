@@ -17,6 +17,22 @@ Arquivo de configuração da biblioteca LVGL. Precisa ser colocado no diretório
 
 Fonte: https://randomnerdtutorials.com/lvgl-cheap-yellow-display-esp32-2432s028r/
 
+DNS NAME IPV6 se nao  so pelo ipv4
+
+http://creeper.local/
+
+<img width="1244" height="565" alt="image" src="https://github.com/user-attachments/assets/13e27c97-57c9-4a0f-b830-3d750f9c219d" />
+
+    // 6. Verificação de Dispositivos IPv6 Específicos (Mickey's Devices)
+    // Basta adicionar o IPv6 completo que aparece no Serial entre as aspas
+    if (clientIP == "fe80::seu_ipv6_pc_aqui" || 
+        clientIP == "fe80::seu_ipv6_celular_aqui" || 
+        clientIP == "fe80::seu_ipv6_tablet_aqui" || 
+        clientIP == "fe80::seu_ipv6_note_aqui") {
+      Serial.println("Acesso Liberado: Dispositivo IPv6 Reconhecido");
+      return true;
+    }
+
 
 
 https://github.com/Annabel369/PanelMinecraft/blob/main/User_Setup.h
