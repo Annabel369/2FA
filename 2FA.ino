@@ -1,6 +1,7 @@
-// ===== CREEPER AUTH v5.5 - DUAL STACK + NETWORK + SEED COLUMNS (VERSÃO FINAL) =====
+// ===== CREEPER AUTH v6.2 - DUAL STACK + NETWORK + SEED COLUMNS (VERSÃO FINAL) =====
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <ESPmDNS.h>
 #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <FS.h>
@@ -11,6 +12,7 @@
 #include <ESP32FtpServer.h>
 #include "mbedtls/md.h"
 #include <vector>
+
 
 #define SD_CS 5
 TFT_eSPI tft = TFT_eSPI();
@@ -42,13 +44,29 @@ bool forceRedraw = true;
 
 WiFiClientSecure client;
 
+bool tlsAtivado = false;
+
 void setupTLS() {
+  // Verifica se os arquivos existem antes de tentar abrir
+  if (!SD.exists("/certs/public.pem") || !SD.exists("/certs/private.pem")) {
+    Serial.println("Certificados não encontrados. Ignorando TLS...");
+    tlsAtivado = false;
+    return;
+  }
+
   File cert = SD.open("/certs/public.pem");
   File key  = SD.open("/certs/private.pem");
 
   if (cert && key) {
+    // Aqui assumimos que você está usando um objeto de servidor seguro
+    // Se for o 'client' de uma conexão de saída:
     client.setCertificate(cert.readString().c_str());
     client.setPrivateKey(key.readString().c_str());
+    tlsAtivado = true;
+    Serial.println("TLS configurado com sucesso.");
+  } else {
+    Serial.println("Erro ao ler arquivos de certificado.");
+    tlsAtivado = false;
   }
 
   cert.close();
@@ -177,6 +195,10 @@ void setup() {
   Serial.println("FTP PORTA 21 User: creeper, Pass: 1234");
   Serial.println("ftp://creeper:1234@192.168.100.49/");
   Serial.println("-------------------------");
+  // No setup, após conectar no Wi-Fi:
+if (MDNS.begin("creeper")) {
+  Serial.println("MDNS responder iniciado: http://creeper.local");
+}
 
   timeClient.begin();
   udpWhitelist.begin(1234);
@@ -211,6 +233,12 @@ void setup() {
       return true;
     }
 
+    // 6. IPv6 na Whitelist
+    if (clientIP.startsWith("fe80")) {
+    Serial.println("Acesso Liberado: Link-Local IPv6 (Mickey)");
+    return true;
+    }
+
     Serial.println("!!! ACESSO NEGADO !!!");
     return false;
   };
@@ -219,25 +247,65 @@ void setup() {
 <style>
   body{background:#000;color:#0f0;font-family:monospace;text-align:center;margin:0;}
   footer{margin-top:40px;font-size:0.85em;color:#666;}
-  .box{border:2px solid #0f0;padding:20px;display:inline-block;margin-top:20px;width:320px;}
-  a{color:#0f0;text-decoration:none;border:1px solid #0f0;padding:5px;margin:3px;display:inline-block;}
+  
+  /* Box Responsiva */
+  .box {
+    border: 2px solid #0f0;
+    padding: 20px;
+    display: inline-block;
+    margin-top: 20px;
+    width: 90%;
+    max-width: 360px;
+    box-sizing: border-box;
+  }
+
+  /* Rosto do Creeper */
+#creeper-container {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  margin: 20px auto;
+  display: block;
+}
+
+#creeper-body {
+  width: 100%;
+  height: 100%;
+  background-color: #0f0; /* Verde Matrix */
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1; /* Fica no fundo */
+}
+
+.pixel {
+  background-color: #000;
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  z-index: 2; /* Fica na frente do verde */
+}
+
+  /* Botões e Inputs */
+  a{background:#000;color:#0f0;text-decoration:none;border:1px solid #0f0;padding:5px;margin:3px;display:inline-block;transition:0.3s;}
+  a:hover{background:#0f0;color:#000;box-shadow:0 0 10px #0f0;}
+  input,select{background:#111;color:#0f0;border:1px solid #0f0;padding:8px;width:100%;margin:5px 0;box-sizing:border-box;}
+  
   .edit{color:#ff0;border-color:#ff0;}
   .del{color:#f00;border-color:#f00;}
-  input,select{background:#111;color:#0f0;border:1px solid #0f0;padding:8px;width:100%;margin:5px 0;box-sizing:border-box;}
-  #creeper-container{width:120px;height:120px;position:relative;margin:20px auto; display:block;} /* Centralizei com margin: auto */
-  #creeper-body{width:100%;height:100%;background-color:#00FF00;position:absolute;}
-  .pixel{background-color:#000;position:absolute;width:10px;height:10px;}
+  .inverted { background: #0f0 !important; color: #000 !important; }
 </style>
 )rawliteral";
 
   // --- Rotas ---
   server.on("/", [css, ehMickey]() {
     // Cabeçalho e CSS
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><meta charset='UTF-8'>" + css + "</head><body>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><meta name='viewport' content='width=device-width, initial-scale=1.0'><meta charset='UTF-8'>" + css + "</head><body>";
     
     h += "<div class='box'>";
     
-    // --- SEU NOVO BLOCO DO CREEPER ---
+
+// --- SEU NOVO BLOCO DO CREEPER ---
     h += "<div id='creeper-container'>";
     h += "<div id='creeper-body'></div>";
     h += "<div class='pixel' style='left: 30px; top: 10px;'></div><div class='pixel' style='left: 40px; top: 10px;'></div><div class='pixel' style='left: 70px; top: 10px;'></div><div class='pixel' style='left: 80px; top: 10px;'></div>";
@@ -250,9 +318,16 @@ void setup() {
     h += "<div class='pixel' style='left: 30px; top: 90px;'></div><div class='pixel' style='left: 40px; top: 90px;'></div><div class='pixel' style='left: 70px; top: 90px;'></div><div class='pixel' style='left: 80px; top: 90px;'></div>";
     h += "<div class='pixel' style='left: 30px; top: 100px;'></div><div class='pixel' style='left: 40px; top: 100px;'></div><div class='pixel' style='left: 70px; top: 100px;'></div><div class='pixel' style='left: 80px; top: 100px;'></div>";
     h += "</div>"; 
-    // ------------------------------------
+// ------------------------------------
 
-    h += "<h2>CREEPER AUTH v5.5</h2>";
+
+if (tlsAtivado) {
+    h += "<p style='color:#0f0; font-size:0.8em;'>🔒 CONEXÃO SEGURA (TLS)</p>";
+} else {
+    h += "<p style='color:#666; font-size:0.8em;'>🔓 MODO INTRANET (HTTP)</p>";
+}
+
+h += "<h2>CREEPER AUTH v6.2</h2>";
     h += "<form action='/select'><select name='id'><option value='-1'>VISOR CREEPER</option>";
     for(int i=0; i<accounts.size(); i++) h += "<option value='"+String(i)+"'>"+accounts[i].name+"</option>";
     h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
@@ -269,7 +344,7 @@ void setup() {
 
   server.on("/manage", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'>><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'>><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
     for(int i=0; i<accounts.size(); i++) {
       h += "<div style='margin-bottom:10px;'>" + accounts[i].name + " <br>";
       h += "<a href='/edit?id="+String(i)+"' class='edit'>[E] EDITAR</a> ";
@@ -282,7 +357,7 @@ void setup() {
   // --- NOVA ROTA: FORMULÁRIO PARA ADICIONAR ---
   server.on("/add", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>NOVO TOKEN</h2><form method='POST' action='/reg'>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>NOVO TOKEN</h2><form method='POST' action='/reg'>";
     h += "NOME (Ex: Discord):<input name='u'>SECRET (Base32):<input name='s'>SENHA (Opcional):<input name='p'><input type='submit' value='CRIAR TOKEN'></form><br><a href='/manage'>VOLTAR</a></div></body></html>";
     server.send(200, "text/html", h);
   });
@@ -302,7 +377,7 @@ void setup() {
     if(!ehMickey()) return server.send(403, "Negado");
     int id = server.arg("id").toInt();
     TotpAccount acc = accounts[id];
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>EDITAR TOKEN</h2><form method='POST' action='/update?id="+String(id)+"'>'";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>EDITAR TOKEN</h2><form method='POST' action='/update?id="+String(id)+"'>'";
     h += "NOME:<input name='u' value='"+acc.name+"'>SECRET:<input name='s' value='"+acc.secretBase32+"'>PASS:<input name='p' value='"+acc.password+"'><input type='submit' value='SALVAR ALTERAÇÕES'></form></div></body></html>";
     server.send(200, "text/html", h);
   });
@@ -321,7 +396,7 @@ void setup() {
 
   server.on("/network", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' action='/net_save'>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' action='/net_save'>";
     h += "SSID:<input name='ss' value='"+cfgSSID+"'>PASS:<input name='pw' value='"+cfgPASS+"'>";
     h += "MODO:<select name='mo'><option value='REDE' "+(String(cfgMODO=="REDE"?"selected":""))+">REDE (Prefixo)</option>";
     h += "<option value='UNICO' "+(String(cfgMODO=="UNICO"?"selected":""))+">IP UNICO</option></select>";
@@ -338,7 +413,7 @@ void setup() {
 
   server.on("/vault", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<html><head><meta charset='UTF-8'>"+css+"</head><body><div class='box'><h2>CRYPTO VAULT</h2>";
+    String h = "<html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>CRYPTO VAULT</h2>";
     for(int i=0; i<seeds.size(); i++) h += "<b>"+seeds[i].label+"</b> <a href='/view_seed?id="+String(i)+"'>VER</a> <a href='/del_seed?id="+String(i)+"' class='del'>X</a><br>";
     h += "<hr><form method='POST' action='/reg_seed'>NOME:<input name='n'>SEED:<input name='s'><input type='submit' value='ADD SEED'></form><br><a href='/'>VOLTAR</a></div></body></html>";
     server.send(200, "text/html", h);
@@ -392,11 +467,13 @@ void loop() {
   timeClient.update();
 
   int packetSize = udpWhitelist.parsePacket();
+  #ifdef ESP32
   if (packetSize) {
     int len = udpWhitelist.read(packetBuffer, 255);
     if (len > 0) packetBuffer[len] = 0;
     dynamicWhitelist = String(packetBuffer);
   }
+  #endif
 
   unsigned long epoch = timeClient.getEpochTime();
   int secondsLeft = 30 - (epoch % 30);
