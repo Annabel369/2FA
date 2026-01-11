@@ -50,54 +50,58 @@ WiFiClientSecure client;
 bool tlsAtivado = false;
 
 void drawWiFiScreen() {
-    // 1. Limpa a tela apenas uma vez
-    tft.fillScreen(TFT_BLACK);
+    tft.fillScreen(TFT_BLACK); // Fundo preto para destaque
     
     QRCode qrcode; 
-    uint8_t qData[qrcode_getBufferSize(3)]; 
+    // Aumentamos para Versão 4 para caber mais informação com margem de erro melhor
+    uint8_t qData[qrcode_getBufferSize(4)]; 
     String wifiPayload = "WIFI:S:" + cfgSSID + ";T:WPA;P:" + cfgPASS + ";;";
     
-    qrcode_initText(&qrcode, qData, 3, 0, wifiPayload.c_str());
+    // Inicializa Versão 4, Nível de correção M (Médio) para permitir o logo central
+    qrcode_initText(&qrcode, qData, 4, 1, wifiPayload.c_str());
 
-    int esc = 4; 
+    // Ajuste de escala para ocupar a tela (Escala 6 ou 7 dependendo do display)
+    int esc = 6; 
     int xOff = (240 - (qrcode.size * esc)) / 2;
-    int yOff = 30;
+    int yOff = 15; // Jogado mais para o topo
 
-    // 2. Desenha o QR Code
+    // 1. Desenha o "Fundo Branco" (Quiet Zone) para o QR Code funcionar
+    tft.fillRect(xOff - 10, yOff - 10, (qrcode.size * esc) + 20, (qrcode.size * esc) + 20, TFT_WHITE);
+
+    // 2. Desenha os módulos pretos do QR Code
     for (uint8_t y = 0; y < qrcode.size; y++) {
         for (uint8_t x = 0; x < qrcode.size; x++) {
             if (qrcode_getModule(&qrcode, x, y)) {
-                tft.fillRect(xOff + (x * esc), yOff + (y * esc), esc, esc, TFT_WHITE);
+                tft.fillRect(xOff + (x * esc), yOff + (y * esc), esc, esc, TFT_BLACK);
             }
         }
     }
 
-    // 3. Desenha o Creeper Central BRANCO e MAIOR
-    // Ajustado para ocupar o centro sem quebrar a leitura do QR
-    int cSize = 45; // Aumentado para 45 pixels
+    // 3. Desenha o Logo do Creeper com a coluna extra pedida
+    int cSize = 48; // Tamanho do bloco do logo
     int cx = xOff + (qrcode.size * esc / 2) - (cSize / 2);
     int cy = yOff + (qrcode.size * esc / 2) - (cSize / 2);
     
-    // Fundo preto para o rosto não misturar com o QR Code
-    tft.fillRect(cx - 2, cy - 2, cSize + 4, cSize + 4, TFT_BLACK); 
+    // Fundo branco do logo para não vazar o QR Code por trás
+    tft.fillRect(cx - 2, cy - 2, cSize + 4, cSize + 4, TFT_WHITE); 
     
-    // Desenho do Rosto (Usando a cor branca para combinar)
-    int p = cSize / 8; // Proporção do pixel do rosto
-    tft.fillRect(cx, cy, cSize, cSize, TFT_WHITE); // Base Branca
-    
-    // Olhos e Boca em PRETO para dar contraste no branco
-    tft.fillRect(cx + p, cy + p, 2*p, 2*p, TFT_BLACK);     // Olho esquerdo
-    tft.fillRect(cx + 5*p, cy + p, 2*p, 2*p, TFT_BLACK);   // Olho direito
-    tft.fillRect(cx + 3*p, cy + 3*p, 2*p, 2*p, TFT_BLACK); // Nariz
-    tft.fillRect(cx + 2*p, cy + 5*p, 4*p, 2*p, TFT_BLACK); // Boca superior
-    tft.fillRect(cx + 2*p, cy + 7*p, p, p, TFT_BLACK);     // Canto boca esq
-    tft.fillRect(cx + 5*p, cy + 7*p, p, p, TFT_BLACK);     // Canto boca dir
+    // Proporção baseada em 8 colunas (para ter a coluna extra no meio)
+    int p = cSize / 8; 
 
-    // Texto informativo
-    tft.setTextColor(TFT_GREEN, TFT_BLACK);
-    tft.drawCentreString("WIFI: " + cfgSSID, 120, 195, 2);
+    // Olhos (2x2)
+    tft.fillRect(cx + p,     cy + p, 2 * p, 2 * p, TFT_BLACK); // Esquerdo
+    tft.fillRect(cx + 5 * p, cy + p, 2 * p, 2 * p, TFT_BLACK); // Direito
+    
+    // Nariz e Boca (Ajustado com a coluna central extra)
+    tft.fillRect(cx + 3 * p, cy + 3 * p, 2 * p, 3 * p, TFT_BLACK); // Centro/Nariz largo
+    tft.fillRect(cx + 2 * p, cy + 4 * p, 4 * p, 3 * p, TFT_BLACK); // Boca principal
+    tft.fillRect(cx + 2 * p, cy + 6 * p, p, p, TFT_BLACK);         // Canto baixo esq
+    tft.fillRect(cx + 5 * p, cy + 6 * p, p, p, TFT_BLACK);         // Canto baixo dir
+
+    // Informações de texto na base (Fonte menor para não poluir)
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.drawCentreString("PASS: " + cfgPASS, 120, 215, 2);
+    tft.drawCentreString("REDE: " + cfgSSID, 120, 210, 2);
+    tft.drawCentreString("SENHA: " + cfgPASS, 120, 225, 2);
 }
 
 void setupTLS() {
