@@ -12,6 +12,7 @@
 #include <ESP32FtpServer.h>
 #include "mbedtls/md.h"
 #include <vector>
+#include "qrcode.h"
 
 
 #define SD_CS 5
@@ -36,6 +37,8 @@ struct SeedRecord { String label; String phrase; };
 std::vector<TotpAccount> accounts;
 std::vector<SeedRecord> seeds;
 
+// Variáveis Globais
+int displayMode = 1; // Começa no rosto do Creeper
 int currentIndex = -1; 
 int currentSeedIndex = -1; 
 int lastSec = -1;
@@ -45,6 +48,57 @@ bool forceRedraw = true;
 WiFiClientSecure client;
 
 bool tlsAtivado = false;
+
+void drawWiFiScreen() {
+    // 1. Limpa a tela apenas uma vez
+    tft.fillScreen(TFT_BLACK);
+    
+    QRCode qrcode; 
+    uint8_t qData[qrcode_getBufferSize(3)]; 
+    String wifiPayload = "WIFI:S:" + cfgSSID + ";T:WPA;P:" + cfgPASS + ";;";
+    
+    qrcode_initText(&qrcode, qData, 3, 0, wifiPayload.c_str());
+
+    int esc = 4; 
+    int xOff = (240 - (qrcode.size * esc)) / 2;
+    int yOff = 30;
+
+    // 2. Desenha o QR Code
+    for (uint8_t y = 0; y < qrcode.size; y++) {
+        for (uint8_t x = 0; x < qrcode.size; x++) {
+            if (qrcode_getModule(&qrcode, x, y)) {
+                tft.fillRect(xOff + (x * esc), yOff + (y * esc), esc, esc, TFT_WHITE);
+            }
+        }
+    }
+
+    // 3. Desenha o Creeper Central BRANCO e MAIOR
+    // Ajustado para ocupar o centro sem quebrar a leitura do QR
+    int cSize = 45; // Aumentado para 45 pixels
+    int cx = xOff + (qrcode.size * esc / 2) - (cSize / 2);
+    int cy = yOff + (qrcode.size * esc / 2) - (cSize / 2);
+    
+    // Fundo preto para o rosto não misturar com o QR Code
+    tft.fillRect(cx - 2, cy - 2, cSize + 4, cSize + 4, TFT_BLACK); 
+    
+    // Desenho do Rosto (Usando a cor branca para combinar)
+    int p = cSize / 8; // Proporção do pixel do rosto
+    tft.fillRect(cx, cy, cSize, cSize, TFT_WHITE); // Base Branca
+    
+    // Olhos e Boca em PRETO para dar contraste no branco
+    tft.fillRect(cx + p, cy + p, 2*p, 2*p, TFT_BLACK);     // Olho esquerdo
+    tft.fillRect(cx + 5*p, cy + p, 2*p, 2*p, TFT_BLACK);   // Olho direito
+    tft.fillRect(cx + 3*p, cy + 3*p, 2*p, 2*p, TFT_BLACK); // Nariz
+    tft.fillRect(cx + 2*p, cy + 5*p, 4*p, 2*p, TFT_BLACK); // Boca superior
+    tft.fillRect(cx + 2*p, cy + 7*p, p, p, TFT_BLACK);     // Canto boca esq
+    tft.fillRect(cx + 5*p, cy + 7*p, p, p, TFT_BLACK);     // Canto boca dir
+
+    // Texto informativo
+    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.drawCentreString("WIFI: " + cfgSSID, 120, 195, 2);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.drawCentreString("PASS: " + cfgPASS, 120, 215, 2);
+}
 
 void setupTLS() {
   // Verifica se os arquivos existem antes de tentar abrir
@@ -386,7 +440,18 @@ if (tlsAtivado) {
 }
 
 h += "<h2>CREEPER AUTH v6.2</h2>";
+
+// --- NOVO BLOCO: CONTROLO DO VISOR FÍSICO ---
+    //h += "<div style='border:1px solid #444; padding:10px; margin-bottom:15px;'>";
+    //h += "<p>VISOR DO DISPOSITIVO:</p>";
+    //h += "<a href='/exibir?modo=WIFI' class='edit'>GERAR QR WIFI</a> ";
+    //h += "<a href='/exibir?modo=CREEPER'>ROSTO NORMAL</a>";
+    //h += "</div>";
+// --------------------------------------------
+
+
     h += "<form action='/select'><select name='id'><option value='-1'>VISOR CREEPER</option>";
+    h += "  <option value='-2'>VISOR: QR CODE WIFI</option>";
     for(int i=0; i<accounts.size(); i++) h += "<option value='"+String(i)+"'>"+accounts[i].name+"</option>";
     h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
 
@@ -411,6 +476,16 @@ h += "<h2>CREEPER AUTH v6.2</h2>";
     h += "<hr><a href='/add'>+ NOVO TOKEN</a><br><a href='/'>VOLTAR</a></div><footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com apoio da Gemini. https://github.com/Annabel369/2FA</footer></body></html>";
     server.send(200, "text/html", h);
   });
+
+  server.on("/exibir", []() {
+    String modo = server.arg("modo");
+    if (modo == "WIFI") {
+        displayMode = 2; // Segunda tela
+    } else {
+        displayMode = 1; // Rosto grande
+    }
+    server.send(200, "text/html", "Modo Alterado");
+});
 
   // --- NOVA ROTA: FORMULÁRIO PARA ADICIONAR ---
   server.on("/add", [css, ehMickey](){
@@ -511,9 +586,31 @@ h += "<h2>CREEPER AUTH v6.2</h2>";
     }
   });
 
-  server.on("/select", [ehMickey](){
-    if(ehMickey()){ currentIndex = server.arg("id").toInt(); currentSeedIndex = -1; forceRedraw = true; server.send(200, "text/html", "<script>location.href='/';</script>"); }
-  });
+  server.on("/select", [ehMickey]() {
+    if(ehMickey()) {
+        int id = server.arg("id").toInt();
+        
+        if (id == -1) {
+            displayMode = 1;      // Modo Rosto
+            currentIndex = -1;    // Tira qualquer conta da tela
+            currentSeedIndex = -1;
+        } 
+        else if (id == -2) {
+            displayMode = 2;      // Modo QR Code
+            currentIndex = -1;    // Tira qualquer conta da tela
+            currentSeedIndex = -1;
+        } 
+        else {
+            displayMode = 1;      // Volta pro modo normal para exibir o Token
+            currentIndex = id;    // Define qual conta mostrar
+            currentSeedIndex = -1;
+        }
+        
+        forceRedraw = true; 
+        // Redireciona de volta para a home em vez de ficar em página branca
+        server.send(200, "text/html", "<script>location.href='/';</script>"); 
+    }
+});
 
   server.begin();
   ftpSrv.begin("creeper", "1234");
@@ -536,13 +633,23 @@ void loop() {
   unsigned long epoch = timeClient.getEpochTime();
   int secondsLeft = 30 - (epoch % 30);
 
+  // --- LÓGICA DE ATUALIZAÇÃO DA TELA ---
   if (secondsLeft != lastSec || forceRedraw) {
-    if (forceRedraw) { tft.fillScreen(TFT_BLACK); forceRedraw = false; }
     
+    // Guardamos o estado do forceRedraw antes de resetá-lo para usar no QR Code
+    bool isRedraw = forceRedraw;
+
+    if (forceRedraw) { 
+      tft.fillScreen(TFT_BLACK); 
+      forceRedraw = false; 
+    }
+
+    // 1. MODO SEEDS (Frase de Recuperação)
     if (currentSeedIndex >= 0) {
+      // (Seu código original de Seeds permanece igual)
       tft.fillScreen(TFT_BLACK);
-      tft.setTextColor(TFT_ORANGE); tft.drawCentreString(seeds[currentSeedIndex].label, 120, 10, 2);
-      
+      tft.setTextColor(TFT_ORANGE); 
+      tft.drawCentreString(seeds[currentSeedIndex].label, 120, 10, 2);
       String phrase = seeds[currentSeedIndex].phrase;
       int wordCount = 0;
       String words[24];
@@ -552,27 +659,43 @@ void loop() {
         start = end + 1; end = phrase.indexOf(' ', start);
       }
       words[wordCount++] = phrase.substring(start);
-
       tft.setTextSize(1);
       for(int i=0; i<wordCount; i++) {
-        int col = i / 8; 
-        int row = i % 8;
-        int x = 10 + (col * 80);
-        int y = 45 + (row * 22);
+        int col = i / 8; int row = i % 8;
+        int x = 10 + (col * 80); int y = 45 + (row * 22);
         tft.setTextColor(TFT_DARKGREY); tft.setCursor(x, y); tft.print(String(i+1));
         tft.setTextColor(TFT_WHITE); tft.setCursor(x + 15, y); tft.print(words[i]);
       }
-    } else {
-      if (currentIndex == -1) { drawCreeper(); drawInfo(epoch); }
-      else {
-        tft.setTextColor(TFT_YELLOW, TFT_BLACK); tft.drawCentreString(accounts[currentIndex].name, 120, 30, 4);
-        tft.setTextColor(TFT_GREEN, TFT_BLACK); tft.drawCentreString(calcTOTP(accounts[currentIndex].secretBase32, epoch), 120, 100, 7);
-        tft.fillRect(20, 170, 200, 10, TFT_BLACK);
-        tft.fillRect(20, 170, map(secondsLeft, 0, 30, 0, 200), 10, (secondsLeft < 6) ? TFT_RED : TFT_BLUE);
-        tft.setTextColor(TFT_WHITE, TFT_BLACK); tft.drawCentreString("P: " + accounts[currentIndex].password, 120, 195, 2);
+    } 
+    
+    // 2. MODO TOTP (Contas Ativas)
+    else if (currentIndex != -1) {
+      tft.setTextColor(TFT_YELLOW, TFT_BLACK); 
+      tft.drawCentreString(accounts[currentIndex].name, 120, 30, 4);
+      tft.setTextColor(TFT_GREEN, TFT_BLACK); 
+      tft.drawCentreString(calcTOTP(accounts[currentIndex].secretBase32, epoch), 120, 100, 7);
+      tft.fillRect(20, 170, 200, 10, TFT_BLACK);
+      tft.fillRect(20, 170, map(secondsLeft, 0, 30, 0, 200), 10, (secondsLeft < 6) ? TFT_RED : TFT_BLUE);
+      tft.setTextColor(TFT_WHITE, TFT_BLACK); 
+      tft.drawCentreString("P: " + accounts[currentIndex].password, 120, 195, 2);
+      drawInfo(epoch);
+    } 
+
+    // 3. MODO STANDBY (Melhorado para não piscar)
+    else {
+      if (displayMode == 1) {
+        drawCreeper(); 
         drawInfo(epoch);
+      } 
+      else if (displayMode == 2) {
+        // SÓ desenha o QR Code se a tela acabou de mudar (isRedraw)
+        // Isso impede que ele redesenhe a cada segundo e fique piscando
+        if (isRedraw) {
+          drawWiFiScreen(); 
+        }
       }
     }
+
     lastSec = secondsLeft;
   }
 }
