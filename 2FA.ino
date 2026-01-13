@@ -36,7 +36,7 @@ String dynamicWhitelist = "";
 String weatherApiKey = "fff7ce772990b49a7efd6b1a6827c687";
 String city = "Bom Jesus dos Perdões, BR";
 String classificarVento(float kmh) {
-  if (kmh < 5)   return "Calmo/Brisa";
+  if (kmh < 5)   return "Brisa Calma";
   if (kmh < 20)  return "Brisa Leve";
   if (kmh < 40)  return "Vento Moderado";
   if (kmh < 60)  return "Vento Forte";
@@ -129,10 +129,14 @@ void drawWeatherScreen() {
   // Temperatura em destaque
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   tft.drawCentreString(String(weather.temp, 1) + " C", 120, 50, 6); // Fonte grande
+  tft.drawCentreString(" C", 177, 50, 4); // Fonte grande
 
   // Velocidade do Vento
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
-  tft.drawCentreString(String(weather.windSpeed, 1) + " km/h", 120, 110, 4);
+  tft.drawCentreString("Velocidade do Vento", 120,115, 2); // Fonte grande
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.drawCentreString(String(weather.windSpeed, 1) + " km/h", 120, 180, 4);
+  
 
   // Classificacao do Vento (Muda de cor se for perigoso)
   uint16_t corVento = TFT_GREEN;
@@ -140,15 +144,12 @@ void drawWeatherScreen() {
   if (weather.windSpeed > 70) corVento = TFT_RED;
 
   tft.setTextColor(corVento, TFT_BLACK);
-  tft.drawCentreString(weather.windDesc, 120, 150, 4);
+  tft.drawCentreString(weather.windDesc, 120, 220, 4);
 
   // Condicao do Ceu
-  tft.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-  tft.drawCentreString(weather.main, 120, 195, 2);
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+  tft.drawCentreString(weather.main, 120, 280, 4);
   
-  // IP no rodape para controle
-  tft.setTextColor(tft.color565(0, 50, 0));
-  tft.drawCentreString(WiFi.localIP().toString(), 120, 225, 1);
 }
 
 void drawWiFiScreen() {
@@ -209,18 +210,18 @@ void drawWiFiScreen() {
     // 4. INFORMAÇÕES DE TEXTO
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     // Usando tft.width()/2 para garantir centralização independente da rotação
-    tft.drawCentreString("REDE: " + cfgSSID, tft.width() / 2, 205, 2);
-    tft.drawCentreString("SENHA: " + cfgPASS, tft.width() / 2, 220, 2);
+    tft.setTextColor(TFT_CYAN, TFT_BLACK);
+    tft.drawCentreString("REDE: " + cfgSSID, tft.width() / 2, 225, 2);
+    tft.setTextColor(TFT_GREEN, TFT_BLACK); // Mudei para verde para destacar a chave
+    tft.drawCentreString("SENHA: " + cfgPASS, tft.width() / 2, 280, 2);
 }
 
 void drawPixScreen() {
     tft.fillScreen(TFT_BLACK);
     QRCode qrcode;
-    
-    // O buffer para Versão 4 é suficiente para a maioria das chaves PIX
     uint8_t qData[qrcode_getBufferSize(4)];
     
-    // Usamos a variável cfgPIX aqui
+    // Inicia o QR com a variável dinâmica
     qrcode_initText(&qrcode, qData, 4, 2, cfgPIX.c_str());
 
     int esc = 6; 
@@ -228,8 +229,10 @@ void drawPixScreen() {
     int xOff = (tft.width() - qSize) / 2;
     int yOff = 15;
 
+    // Fundo branco do QR
     tft.fillRect(xOff - 10, yOff - 10, qSize + 20, qSize + 20, TFT_WHITE);
 
+    // Desenha o QR
     for (uint8_t y = 0; y < qrcode.size; y++) {
         for (uint8_t x = 0; x < qrcode.size; x++) {
             if (qrcode_getModule(&qrcode, x, y)) {
@@ -238,8 +241,8 @@ void drawPixScreen() {
         }
     }
 
-    // --- LOGO DO PORCO (Mantido como você gosta) ---
-    int cSize = 32; 
+    // --- LOGO DO PORCO (Centralizado no QR) ---
+    int cSize = 48; 
     int cx = xOff + (qSize / 2) - (cSize / 2);
     int cy = yOff + (qSize / 2) - (cSize / 2);
     int p = cSize / 8;
@@ -253,13 +256,17 @@ void drawPixScreen() {
     tft.fillRect(cx + 7*p, cy + 2*p, p, p, TFT_BLACK);
     tft.fillRect(cx + 2*p, cy + 4*p, 4*p, 2*p, FOCINHO);
 
-    // --- TEXTOS DINÂMICOS ---
+    // --- AJUSTE DE TEXTO (Mais para baixo) ---
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.drawCentreString("PAGAR VIA PIX", tft.width()/2, 205, 4);
     
-    // Se a chave for muito longa (como um e-mail), usa fonte menor
+    // Subi um pouco o título para não amontoar
+    tft.drawCentreString("PAGAR VIA PIX", tft.width()/2, 250, 4); 
+    
+    // A chave PIX agora fica em 215 (antes era 225/rodape)
+    // Isso deixa um respiro de 5-10 pixels da borda física
     int fonteChave = (cfgPIX.length() > 20) ? 1 : 2;
-    tft.drawCentreString(cfgPIX, tft.width()/2, 225, fonteChave);
+    tft.setTextColor(TFT_GREEN, TFT_BLACK); // Mudei para verde para destacar a chave
+    tft.drawCentreString(cfgPIX, tft.width()/2, 280, fonteChave);
 }
 
 // --- Gestão de Arquivos ---
@@ -270,6 +277,7 @@ void salvarConfig() {
     f.println("PASS=" + cfgPASS); 
     f.println("MODO=" + cfgMODO); 
     f.println("IP_ALVO=" + cfgIP); 
+    f.println("PIX=" + cfgPIX); // ADICIONE ESTA LINHA
     f.close(); 
   }
 }
@@ -284,6 +292,7 @@ void carregarTudo() {
       else if (line.startsWith("PASS=")) cfgPASS = line.substring(5);
       else if (line.startsWith("MODO=")) cfgMODO = line.substring(5);
       else if (line.startsWith("IP_ALVO=")) cfgIP = line.substring(8);
+      else if (line.startsWith("PIX=")) cfgPIX = line.substring(4);
     }
     f.close();
   }
@@ -447,6 +456,8 @@ void drawInfo(unsigned long epoch) {
   // Mostra o IP em Verde Matrix no visor
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.drawCentreString(WiFi.localIP().toString(), 120, 215, 2);
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.drawCentreString(weather.main, 120, 280, 4);
 }
 
 // --- Setup ---
@@ -723,14 +734,15 @@ h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
     h += "SSID:<input name='ss' value='"+cfgSSID+"'>PASS:<input name='pw' value='"+cfgPASS+"'>";
     h += "MODO:<select name='mo'><option value='REDE' "+(String(cfgMODO=="REDE"?"selected":""))+">REDE (Prefixo)</option>";
     h += "<option value='UNICO' "+(String(cfgMODO=="UNICO"?"selected":""))+">IP UNICO</option></select>";
-    h += "CHAVE PIX:<input name='px' value='"+cfgPIX+"'>";
-    h += "IP/PREFIXO:<input name='ip' value='"+cfgIP+"'><input type='submit' value='SALVAR E REINICIAR'></form><br><a href='/'>VOLTAR</a></div><footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com apoio da Gemini. https://github.com/Annabel369/2FA</footer></body></html>";
+    h += "IP/PREFIXO:<input name='ip' value='"+cfgIP+"'>";
+    h += "CHAVE PIX (CPF/Email):<input name='px' value='"+cfgPIX+"'>";
+    h += "<input type='submit' value='SALVAR E REINICIAR'></form><br><a href='/'>VOLTAR</a></div><footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com apoio da Gemini. https://github.com/Annabel369/2FA</footer></body></html>";
     server.send(200, "text/html", h);
   });
 
   server.on("/net_save", HTTP_POST, [ehMickey](){
     if(ehMickey()){
-      cfgSSID=server.arg("ss"); cfgPASS=server.arg("pw"); cfgMODO=server.arg("mo"); cfgPIX = server.arg("px"); cfgIP=server.arg("ip");
+      cfgSSID=server.arg("ss"); cfgPASS=server.arg("pw"); cfgMODO=server.arg("mo"); cfgIP=server.arg("ip"); cfgPIX = server.arg("px");
       salvarConfig(); delay(1000); ESP.restart();
     }
   });
