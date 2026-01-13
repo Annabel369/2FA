@@ -112,25 +112,25 @@ void drawWiFiScreen() {
 }
 
 void drawPixScreen() {
-    tft.fillScreen(TFT_BLACK); 
+    tft.fillScreen(TFT_BLACK);
+    QRCode qrcode;
+    uint8_t qData[qrcode_getBufferSize(4)];
     
-    QRCode qrcode; 
-    uint8_t qData[qrcode_getBufferSize(4)]; 
-    // O payload do Pix para CPF (simples)
-    String cpfPix = "342.049.358-42"; 
+    // Seu CPF
+    String pixPayload = "342.049.358-42";
     
-    // Inicializa QR Code Versão 4
-    qrcode_initText(&qrcode, qData, 4, 2, cpfPix.c_str());
+    // Inicializa QR Versão 4, Nível de correção 2 (Q) para aguentar o logo
+    qrcode_initText(&qrcode, qData, 4, 2, pixPayload.c_str());
 
-    int esc = 6; 
+    int esc = 6;
     int qSize = qrcode.size * esc;
     int xOff = (tft.width() - qSize) / 2;
-    int yOff = 10; 
+    int yOff = 15;
 
-    // Fundo branco do QR
-    tft.fillRect(xOff - 8, yOff - 8, qSize + 16, qSize + 16, TFT_WHITE);
+    // 1. Fundo Branco do QR Code
+    tft.fillRect(xOff - 10, yOff - 10, qSize + 20, qSize + 20, TFT_WHITE);
 
-    // Desenha o QR Code
+    // 2. Desenha o QR Code
     for (uint8_t y = 0; y < qrcode.size; y++) {
         for (uint8_t x = 0; x < qrcode.size; x++) {
             if (qrcode_getModule(&qrcode, x, y)) {
@@ -139,19 +139,39 @@ void drawPixScreen() {
         }
     }
 
-    // Logo Central (Opcional: Pode ser o ícone do PIX ou manter o Creeper)
-    // Vamos desenhar um pequeno 'P' ou manter o estilo para identificar
-    int cSize = 40;
+    // 3. DESENHO DO PORCO (Reduzido para 32x32 para facilitar a leitura)
+    int cSize = 32; 
     int cx = xOff + (qSize / 2) - (cSize / 2);
     int cy = yOff + (qSize / 2) - (cSize / 2);
-    tft.fillRect(cx, cy, cSize, cSize, TFT_WHITE); // Fundo limpo central
-    tft.setTextColor(TFT_BLUE);
-    tft.drawCentreString("PIX", xOff + (qSize / 2), yOff + (qSize / 2) - 8, 2);
+    
+    // Limpa a área central (Margem de segurança branca)
+    tft.fillRect(cx - 2, cy - 2, cSize + 4, cSize + 4, TFT_WHITE); 
+    
+    // Unidade proporcional p = 32/8 = 4 pixels
+    int p = cSize / 8; 
+    uint16_t PINK = tft.color565(255, 182, 193);
 
-    // TEXTOS INFERIORES
+    // Cabeça/Fundo do Porco
+    tft.fillRect(cx, cy, cSize, cSize, PINK);
+
+    // Olhos (Preto e Branco)
+    tft.fillRect(cx,         cy + 2*p, p, p, TFT_BLACK); // Olho esq preto
+    tft.fillRect(cx + p,     cy + 2*p, p, p, TFT_WHITE); // Olho esq branco
+    tft.fillRect(cx + 6*p,   cy + 2*p, p, p, TFT_WHITE); // Olho dir branco
+    tft.fillRect(cx + 7*p,   cy + 2*p, p, p, TFT_BLACK); // Olho dir preto
+
+    // Nariz (Focinho) - Rosa mais escuro
+    uint16_t NOSE_PINK = tft.color565(255, 105, 180);
+    tft.fillRect(cx + 2*p, cy + 4*p, 4*p, 2*p, NOSE_PINK);
+    
+    // Narinas
+    tft.fillRect(cx + 2*p, cy + 5*p, p, p, tft.color565(200, 80, 150));
+    tft.fillRect(cx + 5*p, cy + 5*p, p, p, tft.color565(200, 80, 150));
+
+    // 4. TEXTOS INFERIORES
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.drawCentreString("PIX", tft.width() / 2, 205, 4); // Escrita PIX em destaque
-    tft.drawCentreString("CPF: " + cpfPix, tft.width() / 2, 225, 2); // Escrita CPF embaixo
+    tft.drawCentreString("PIX - CPF", tft.width()/2, 205, 4);
+    tft.drawCentreString(pixPayload, tft.width()/2, 225, 2);
 }
 
 // --- Gestão de Arquivos ---
@@ -477,7 +497,13 @@ h += "<h2>CREEPER AUTH v6.2</h2>";
 
 
     h += "<form action='/select'><select name='id'><option value='-1'>VISOR CREEPER</option>";
+
+    // Botão WiFi
     h += "  <option value='-2'>VISOR: QR CODE WIFI</option>";
+
+    // Botão PIX (Novo!)
+    h += "  <option value='-3'>VISOR: QR CODE PIX</option>";
+
     for(int i=0; i<accounts.size(); i++) h += "<option value='"+String(i)+"'>"+accounts[i].name+"</option>";
     h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
 
@@ -505,12 +531,25 @@ h += "<h2>CREEPER AUTH v6.2</h2>";
 
   server.on("/exibir", []() {
     String modo = server.arg("modo");
+    
+    // Resetamos os índices de conta para voltar ao modo Standby
+    currentIndex = -1;
+    currentSeedIndex = -1;
+
     if (modo == "WIFI") {
-        displayMode = 2; // Segunda tela
-    } else {
-        displayMode = 1; // Rosto grande
+        displayMode = 2; // Tela do QR WiFi
+    } 
+    else if (modo == "PIX") {
+        displayMode = 3; // Nova tela do PIX (ID 3)
     }
-    server.send(200, "text/html", "Modo Alterado");
+    else {
+        displayMode = 1; // Volta para o Rosto do Creeper (ID 1)
+    }
+
+    forceRedraw = true; // Avisa o loop() para desenhar a nova tela imediatamente
+    
+    // Resposta amigável para o navegador
+    server.send(200, "text/html", "Modo " + modo + " Ativado no Visor");
 });
 
   // --- NOVA ROTA: FORMULÁRIO PARA ADICIONAR ---
