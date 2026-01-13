@@ -27,12 +27,12 @@ WebServer server(80);
 FtpServer ftpSrv;
 
 // Configurações e Whitelist
-String cfgSSID = "Maria Cristina 4G";
-String cfgPASS = "1247bfam";
+String cfgSSID = "CREEPER WIFI & 6G";
+String cfgPASS = "ADS#D#%@#$m";
 String cfgMODO = "REDE"; 
 String cfgIP   = "192.168.100."; 
 String dynamicWhitelist = ""; 
-String weatherApiKey = "fff7ce772990b49a7efd6b1a6827c687";
+String weatherApiKey = "fffXXXXXXXXXXXXXXXXXXXXXXXX687";//https://home.openweathermap.org/api_keys
 String city = "Bom Jesus dos Perdões, BR";
 String classificarVento(float kmh) {
   if (kmh < 5)   return "Calmo/Brisa";
