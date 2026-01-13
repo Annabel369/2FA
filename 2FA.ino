@@ -27,12 +27,13 @@ WebServer server(80);
 FtpServer ftpSrv;
 
 // Configurações e Whitelist
-String cfgSSID = "CREEPER WIFI & 6G";
-String cfgPASS = "ADS#D#%@#$m";
+String cfgSSID = "Maria Cristina 4G";
+String cfgPASS = "1247bfam";
 String cfgMODO = "REDE"; 
 String cfgIP   = "192.168.100."; 
+String cfgPIX = "342.049.358-42"; // Pode ser CPF, E-mail ou Chave Aleatória
 String dynamicWhitelist = ""; 
-String weatherApiKey = "fffXXXXXXXXXXXXXXXXXXXXXXXX687";//https://home.openweathermap.org/api_keys
+String weatherApiKey = "fff7ce772990b49a7efd6b1a6827c687";
 String city = "Bom Jesus dos Perdões, BR";
 String classificarVento(float kmh) {
   if (kmh < 5)   return "Calmo/Brisa";
@@ -215,21 +216,20 @@ void drawWiFiScreen() {
 void drawPixScreen() {
     tft.fillScreen(TFT_BLACK);
     QRCode qrcode;
-    uint8_t qData[qrcode_getBufferSize(4)];
-    String pixPayload = "342.049.358-42";
     
-    // Versão 4 com correção nível 2 (Q) é o equilíbrio perfeito
-    qrcode_initText(&qrcode, qData, 4, 2, pixPayload.c_str());
+    // O buffer para Versão 4 é suficiente para a maioria das chaves PIX
+    uint8_t qData[qrcode_getBufferSize(4)];
+    
+    // Usamos a variável cfgPIX aqui
+    qrcode_initText(&qrcode, qData, 4, 2, cfgPIX.c_str());
 
     int esc = 6; 
     int qSize = qrcode.size * esc;
     int xOff = (tft.width() - qSize) / 2;
     int yOff = 15;
 
-    // Fundo branco do QR
     tft.fillRect(xOff - 10, yOff - 10, qSize + 20, qSize + 20, TFT_WHITE);
 
-    // Desenha módulos do QR
     for (uint8_t y = 0; y < qrcode.size; y++) {
         for (uint8_t x = 0; x < qrcode.size; x++) {
             if (qrcode_getModule(&qrcode, x, y)) {
@@ -238,36 +238,28 @@ void drawPixScreen() {
         }
     }
 
-    // --- DESENHO DO PORCO PEQUENO (8x8 Proporcional) ---
-    int cSize = 32; // Tamanho total do rosto do porco
+    // --- LOGO DO PORCO (Mantido como você gosta) ---
+    int cSize = 32; 
     int cx = xOff + (qSize / 2) - (cSize / 2);
     int cy = yOff + (qSize / 2) - (cSize / 2);
-    int p = cSize / 8; // p = 4 pixels
-
-    // Margem de segurança branca
+    int p = cSize / 8;
     tft.fillRect(cx - 2, cy - 2, cSize + 4, cSize + 4, TFT_WHITE);
-
-    // Cores do Porco
     uint16_t ROSA = tft.color565(255, 180, 190);
     uint16_t FOCINHO = tft.color565(255, 120, 160);
-
-    tft.fillRect(cx, cy, cSize, cSize, ROSA); // Rosto
-
-    // Olhos (Preto/Branco)
-    tft.fillRect(cx,         cy + 2*p, p, p, TFT_BLACK); 
-    tft.fillRect(cx + p,     cy + 2*p, p, p, TFT_WHITE);
-    tft.fillRect(cx + 6*p,   cy + 2*p, p, p, TFT_WHITE);
-    tft.fillRect(cx + 7*p,   cy + 2*p, p, p, TFT_BLACK);
-
-    // Focinho
+    tft.fillRect(cx, cy, cSize, cSize, ROSA);
+    tft.fillRect(cx, cy + 2*p, p, p, TFT_BLACK); 
+    tft.fillRect(cx + p, cy + 2*p, p, p, TFT_WHITE);
+    tft.fillRect(cx + 6*p, cy + 2*p, p, p, TFT_WHITE);
+    tft.fillRect(cx + 7*p, cy + 2*p, p, p, TFT_BLACK);
     tft.fillRect(cx + 2*p, cy + 4*p, 4*p, 2*p, FOCINHO);
-    tft.fillRect(cx + 2*p, cy + 5*p, p, p, tft.color565(200, 80, 120)); // Narina esq
-    tft.fillRect(cx + 5*p, cy + 5*p, p, p, tft.color565(200, 80, 120)); // Narina dir
 
-    // Textos
+    // --- TEXTOS DINÂMICOS ---
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.drawCentreString("PIX - CPF", tft.width()/2, 205, 4);
-    tft.drawCentreString(pixPayload, tft.width()/2, 225, 2);
+    tft.drawCentreString("PAGAR VIA PIX", tft.width()/2, 205, 4);
+    
+    // Se a chave for muito longa (como um e-mail), usa fonte menor
+    int fonteChave = (cfgPIX.length() > 20) ? 1 : 2;
+    tft.drawCentreString(cfgPIX, tft.width()/2, 225, fonteChave);
 }
 
 // --- Gestão de Arquivos ---
@@ -731,13 +723,14 @@ h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
     h += "SSID:<input name='ss' value='"+cfgSSID+"'>PASS:<input name='pw' value='"+cfgPASS+"'>";
     h += "MODO:<select name='mo'><option value='REDE' "+(String(cfgMODO=="REDE"?"selected":""))+">REDE (Prefixo)</option>";
     h += "<option value='UNICO' "+(String(cfgMODO=="UNICO"?"selected":""))+">IP UNICO</option></select>";
+    h += "CHAVE PIX:<input name='px' value='"+cfgPIX+"'>";
     h += "IP/PREFIXO:<input name='ip' value='"+cfgIP+"'><input type='submit' value='SALVAR E REINICIAR'></form><br><a href='/'>VOLTAR</a></div><footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com apoio da Gemini. https://github.com/Annabel369/2FA</footer></body></html>";
     server.send(200, "text/html", h);
   });
 
   server.on("/net_save", HTTP_POST, [ehMickey](){
     if(ehMickey()){
-      cfgSSID=server.arg("ss"); cfgPASS=server.arg("pw"); cfgMODO=server.arg("mo"); cfgIP=server.arg("ip");
+      cfgSSID=server.arg("ss"); cfgPASS=server.arg("pw"); cfgMODO=server.arg("mo"); cfgPIX = server.arg("px"); cfgIP=server.arg("ip");
       salvarConfig(); delay(1000); ESP.restart();
     }
   });
