@@ -1,4 +1,5 @@
 // ===== CREEPER AUTH v6.2 - DUAL STACK + NETWORK + SEED COLUMNS (VERSÃO FINAL) =====
+#include <HTTPClient.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <ESPmDNS.h>
@@ -13,6 +14,8 @@
 #include "mbedtls/md.h"
 #include <vector>
 #include "qrcode.h"
+#include <ArduinoJson.h> // Você precisará instalar a biblioteca ArduinoJson
+
 
 
 #define SD_CS 5
@@ -29,10 +32,28 @@ String cfgPASS = "1247bfam";
 String cfgMODO = "REDE"; 
 String cfgIP   = "192.168.100."; 
 String dynamicWhitelist = ""; 
+String weatherApiKey = "fff7ce772990b49a7efd6b1a6827c687";
+String city = "Bom Jesus dos Perdões, BR";
+String classificarVento(float kmh) {
+  if (kmh < 5)   return "Calmo/Brisa";
+  if (kmh < 20)  return "Brisa Leve";
+  if (kmh < 40)  return "Vento Moderado";
+  if (kmh < 60)  return "Vento Forte";
+  if (kmh < 90)  return "VENDAVAL";
+  if (kmh < 117) return "TEMPESTADE";
+  return "FURACAO/TORNADO";
+}
+
 char packetBuffer[255]; 
 
 struct TotpAccount { String name; String secretBase32; String password; };
 struct SeedRecord { String label; String phrase; };
+struct WeatherData { 
+    float temp; 
+    float windSpeed; 
+    String main; 
+    String windDesc; // Para guardar o nome (Brisa, Vendaval, etc)
+};
 
 std::vector<TotpAccount> accounts;
 std::vector<SeedRecord> seeds;
@@ -46,8 +67,88 @@ bool forceRedraw = true;
 
 
 WiFiClientSecure client;
+WeatherData weather;
 
 bool tlsAtivado = false;
+
+void updateWeather() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    
+    // URL configurada para One Call 3.0 com coordenadas de Bom Jesus dos Perdões
+    String url = "http://api.openweathermap.org/data/3.0/onecall?lat=-23.13&lon=-46.46&exclude=minutely,hourly,daily&appid=" + weatherApiKey + "&units=metric&lang=pt_br";
+    
+    Serial.println("Buscando dados meteorologicos...");
+    http.begin(url);
+    int httpCode = http.GET();
+    
+    if (httpCode == 200) {
+      String payload = http.getString();
+      
+      // Documento dinamico para processar o JSON da One Call
+      DynamicJsonDocument doc(2048); 
+      DeserializationError error = deserializeJson(doc, payload);
+
+      if (!error) {
+        // 1. Temperatura
+        weather.temp = doc["current"]["temp"];
+        
+        // 2. Vento (A API envia em m/s, convertemos para km/h multiplicando por 3.6)
+        float windMps = doc["current"]["wind_speed"];
+        weather.windSpeed = windMps * 3.6;
+        
+        // 3. Classificacao do vento (Brisa, Vendaval, Tornado...)
+        weather.windDesc = classificarVento(weather.windSpeed);
+        
+        // 4. Descrição do Céu (Ex: "céu limpo", "nuvens esparsas")
+        weather.main = doc["current"]["weather"][0]["description"].as<String>();
+        
+        // Log para o Monitor Serial
+        Serial.println("--- DADOS RECEBIDOS ---");
+        Serial.print("Temp: "); Serial.print(weather.temp); Serial.println(" C");
+        Serial.print("Vento: "); Serial.print(weather.windSpeed); Serial.print(" km/h - "); Serial.println(weather.windDesc);
+        Serial.println("-----------------------");
+
+        forceRedraw = true; // Força a atualização do visor TFT
+      } else {
+        Serial.print("Erro ao processar JSON: "); Serial.println(error.c_str());
+      }
+    } else {
+      Serial.printf("Erro na comunicacao (HTTP): %d\n", httpCode);
+    }
+    http.end();
+  }
+}
+
+void drawWeatherScreen() {
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+  tft.drawCentreString("METEOROLOGIA", 120, 10, 2);
+
+  // Temperatura em destaque
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.drawCentreString(String(weather.temp, 1) + " C", 120, 50, 6); // Fonte grande
+
+  // Velocidade do Vento
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.drawCentreString(String(weather.windSpeed, 1) + " km/h", 120, 110, 4);
+
+  // Classificacao do Vento (Muda de cor se for perigoso)
+  uint16_t corVento = TFT_GREEN;
+  if (weather.windSpeed > 40) corVento = TFT_ORANGE;
+  if (weather.windSpeed > 70) corVento = TFT_RED;
+
+  tft.setTextColor(corVento, TFT_BLACK);
+  tft.drawCentreString(weather.windDesc, 120, 150, 4);
+
+  // Condicao do Ceu
+  tft.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  tft.drawCentreString(weather.main, 120, 195, 2);
+  
+  // IP no rodape para controle
+  tft.setTextColor(tft.color565(0, 50, 0));
+  tft.drawCentreString(WiFi.localIP().toString(), 120, 225, 1);
+}
 
 void drawWiFiScreen() {
     tft.fillScreen(TFT_BLACK); // Fundo preto para destaque
@@ -115,22 +216,20 @@ void drawPixScreen() {
     tft.fillScreen(TFT_BLACK);
     QRCode qrcode;
     uint8_t qData[qrcode_getBufferSize(4)];
-    
-    // Seu CPF
     String pixPayload = "342.049.358-42";
     
-    // Inicializa QR Versão 4, Nível de correção 2 (Q) para aguentar o logo
+    // Versão 4 com correção nível 2 (Q) é o equilíbrio perfeito
     qrcode_initText(&qrcode, qData, 4, 2, pixPayload.c_str());
 
-    int esc = 6;
+    int esc = 6; 
     int qSize = qrcode.size * esc;
     int xOff = (tft.width() - qSize) / 2;
     int yOff = 15;
 
-    // 1. Fundo Branco do QR Code
+    // Fundo branco do QR
     tft.fillRect(xOff - 10, yOff - 10, qSize + 20, qSize + 20, TFT_WHITE);
 
-    // 2. Desenha o QR Code
+    // Desenha módulos do QR
     for (uint8_t y = 0; y < qrcode.size; y++) {
         for (uint8_t x = 0; x < qrcode.size; x++) {
             if (qrcode_getModule(&qrcode, x, y)) {
@@ -139,36 +238,33 @@ void drawPixScreen() {
         }
     }
 
-    // 3. DESENHO DO PORCO (Reduzido para 32x32 para facilitar a leitura)
-    int cSize = 32; 
+    // --- DESENHO DO PORCO PEQUENO (8x8 Proporcional) ---
+    int cSize = 32; // Tamanho total do rosto do porco
     int cx = xOff + (qSize / 2) - (cSize / 2);
     int cy = yOff + (qSize / 2) - (cSize / 2);
-    
-    // Limpa a área central (Margem de segurança branca)
-    tft.fillRect(cx - 2, cy - 2, cSize + 4, cSize + 4, TFT_WHITE); 
-    
-    // Unidade proporcional p = 32/8 = 4 pixels
-    int p = cSize / 8; 
-    uint16_t PINK = tft.color565(255, 182, 193);
+    int p = cSize / 8; // p = 4 pixels
 
-    // Cabeça/Fundo do Porco
-    tft.fillRect(cx, cy, cSize, cSize, PINK);
+    // Margem de segurança branca
+    tft.fillRect(cx - 2, cy - 2, cSize + 4, cSize + 4, TFT_WHITE);
 
-    // Olhos (Preto e Branco)
-    tft.fillRect(cx,         cy + 2*p, p, p, TFT_BLACK); // Olho esq preto
-    tft.fillRect(cx + p,     cy + 2*p, p, p, TFT_WHITE); // Olho esq branco
-    tft.fillRect(cx + 6*p,   cy + 2*p, p, p, TFT_WHITE); // Olho dir branco
-    tft.fillRect(cx + 7*p,   cy + 2*p, p, p, TFT_BLACK); // Olho dir preto
+    // Cores do Porco
+    uint16_t ROSA = tft.color565(255, 180, 190);
+    uint16_t FOCINHO = tft.color565(255, 120, 160);
 
-    // Nariz (Focinho) - Rosa mais escuro
-    uint16_t NOSE_PINK = tft.color565(255, 105, 180);
-    tft.fillRect(cx + 2*p, cy + 4*p, 4*p, 2*p, NOSE_PINK);
-    
-    // Narinas
-    tft.fillRect(cx + 2*p, cy + 5*p, p, p, tft.color565(200, 80, 150));
-    tft.fillRect(cx + 5*p, cy + 5*p, p, p, tft.color565(200, 80, 150));
+    tft.fillRect(cx, cy, cSize, cSize, ROSA); // Rosto
 
-    // 4. TEXTOS INFERIORES
+    // Olhos (Preto/Branco)
+    tft.fillRect(cx,         cy + 2*p, p, p, TFT_BLACK); 
+    tft.fillRect(cx + p,     cy + 2*p, p, p, TFT_WHITE);
+    tft.fillRect(cx + 6*p,   cy + 2*p, p, p, TFT_WHITE);
+    tft.fillRect(cx + 7*p,   cy + 2*p, p, p, TFT_BLACK);
+
+    // Focinho
+    tft.fillRect(cx + 2*p, cy + 4*p, 4*p, 2*p, FOCINHO);
+    tft.fillRect(cx + 2*p, cy + 5*p, p, p, tft.color565(200, 80, 120)); // Narina esq
+    tft.fillRect(cx + 5*p, cy + 5*p, p, p, tft.color565(200, 80, 120)); // Narina dir
+
+    // Textos
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.drawCentreString("PIX - CPF", tft.width()/2, 205, 4);
     tft.drawCentreString(pixPayload, tft.width()/2, 225, 2);
@@ -219,6 +315,37 @@ void carregarTudo() {
     }
     fs.close();
   }
+}
+
+void drawSpiderJockey(int x, int y, int tam) {
+    int p = tam / 10; // Unidade de pixel
+    
+    // Corpo da Aranha (Marrom escuro)
+    uint16_t MARROM = tft.color565(60, 40, 30);
+    tft.fillRect(x, y + 5*p, tam, 4*p, MARROM); // Abdômen
+    tft.fillRect(x + 2*p, y + 4*p, 4*p, 3*p, MARROM); // Cabeça da aranha
+    
+    // Olhos Vermelhos da Aranha
+    tft.fillRect(x + 3*p, y + 5*p, 1, 1, TFT_RED);
+    tft.fillRect(x + 5*p, y + 5*p, 1, 1, TFT_RED);
+    
+    // Pernas da Aranha
+    for(int i=0; i<4; i++) {
+        tft.drawLine(x + 2*p, y + 6*p, x - 2*p, y + 4*p + (i*2), MARROM); // Esquerda
+        tft.drawLine(x + 6*p, y + 6*p, x + tam, y + 4*p + (i*2), MARROM); // Direita
+    }
+
+    // Esqueleto (Cinza claro)
+    uint16_t CINZA = tft.color565(200, 200, 200);
+    tft.fillRect(x + 3*p, y, 3*p, 3*p, CINZA); // Cabeça
+    tft.fillRect(x + 4*p, y + 3*p, p, 3*p, CINZA); // Coluna/Corpo
+    
+    // Olhos do Esqueleto
+    tft.fillRect(x + 3*p + 1, y + 1, 1, 1, TFT_BLACK);
+    tft.fillRect(x + 5*p - 1, y + 1, 1, 1, TFT_BLACK);
+    
+    // Arco (Amarelo queimado)
+    tft.drawCircle(x + 6*p, y + 3*p, 4, tft.color565(150, 120, 50));
 }
 
 // --- TOTP Lógica ---
@@ -488,24 +615,29 @@ if (tlsAtivado) {
 h += "<h2>CREEPER AUTH v6.2</h2>";
 
 // --- NOVO BLOCO: CONTROLO DO VISOR FÍSICO ---
-    //h += "<div style='border:1px solid #444; padding:10px; margin-bottom:15px;'>";
-    //h += "<p>VISOR DO DISPOSITIVO:</p>";
-    //h += "<a href='/exibir?modo=WIFI' class='edit'>GERAR QR WIFI</a> ";
-    //h += "<a href='/exibir?modo=CREEPER'>ROSTO NORMAL</a>";
-    //h += "</div>";
+    h += "<div style='border:1px solid #444; padding:10px; margin-bottom:15px;'>";
+    h += "<p>VISOR DO DISPOSITIVO:</p>";
+    h += "<a href='https://home.openweathermap.org/api_keys' class='edit'>Api Meteorologica</a> ";
+    h += "</div>";
 // --------------------------------------------
 
 
     h += "<form action='/select'><select name='id'><option value='-1'>VISOR CREEPER</option>";
 
-    // Botão WiFi
-    h += "  <option value='-2'>VISOR: QR CODE WIFI</option>";
+// Botão WiFi
+h += "  <option value='-2'>VISOR: QR CODE WIFI</option>";
 
-    // Botão PIX (Novo!)
-    h += "  <option value='-3'>VISOR: QR CODE PIX</option>";
+// Botão PIX
+h += "  <option value='-3'>VISOR: QR CODE PIX</option>";
 
-    for(int i=0; i<accounts.size(); i++) h += "<option value='"+String(i)+"'>"+accounts[i].name+"</option>";
-    h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
+// NOVO: Botão Meteorologia
+h += "  <option value='-4'>VISOR: METEOROLOGIA (API)</option>";
+
+for(int i=0; i<accounts.size(); i++) {
+    h += "<option value='"+String(i)+"'>"+accounts[i].name+"</option>";
+}
+
+h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
 
     if(ehMickey()) {
       h += "<a href='/vault'>VAULT</a> <a href='/manage'>TOKENS</a><br><a href='/network'>WI-FI & IP</a>";
@@ -532,23 +664,24 @@ h += "<h2>CREEPER AUTH v6.2</h2>";
   server.on("/exibir", []() {
     String modo = server.arg("modo");
     
-    // Resetamos os índices de conta para voltar ao modo Standby
     currentIndex = -1;
     currentSeedIndex = -1;
 
     if (modo == "WIFI") {
-        displayMode = 2; // Tela do QR WiFi
+        displayMode = 1; // QR WiFi
     } 
     else if (modo == "PIX") {
-        displayMode = 3; // Nova tela do PIX (ID 3)
+        displayMode = 2; // QR PIX
+    }
+    else if (modo == "CLIMA") {
+        displayMode = 4; // Nova tela de Meteorologia
+        updateWeather(); // Busca os dados da API com sua chave Default
     }
     else {
-        displayMode = 1; // Volta para o Rosto do Creeper (ID 1)
+        displayMode = 0; // Volta para o Rosto do Creeper
     }
 
-    forceRedraw = true; // Avisa o loop() para desenhar a nova tela imediatamente
-    
-    // Resposta amigável para o navegador
+    forceRedraw = true; 
     server.send(200, "text/html", "Modo " + modo + " Ativado no Visor");
 });
 
@@ -611,9 +744,31 @@ h += "<h2>CREEPER AUTH v6.2</h2>";
 
   server.on("/vault", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>CRYPTO VAULT</h2>";
-    for(int i=0; i<seeds.size(); i++) h += "<b>"+seeds[i].label+"</b> <a href='/view_seed?id="+String(i)+"'>VER</a> <a href='/del_seed?id="+String(i)+"' class='del'>X</a><br>";
-    h += "<hr><form method='POST' action='/reg_seed'>NOME:<input name='n'>SEED:<input name='s'><input type='submit' value='ADD SEED'></form><br><a href='/'>VOLTAR</a></div></body></html>";
+    
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>" + css + "</head><body>";
+    h += "<div class='box'><h2>CRYPTO VAULT</h2>";
+    
+    // --- LISTAGEM DAS SEEDS SALVAS ---
+    h += "<div style='text-align:left; margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:10px;'>";
+    if (seeds.size() == 0) {
+        h += "<p style='color:#666;'>Nenhuma semente salva.</p>";
+    } else {
+        for(int i=0; i<seeds.size(); i++) {
+          h += "<div style='margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;'>";
+          h += "<span><b>" + seeds[i].label + "</b></span>";
+          h += "<div>";
+          h += "<a href='/view_seed?id="+String(i)+"' style='color:#0f0;'>[VER]</a> ";
+          h += "<a href='/del_seed?id="+String(i)+"' class='del'>[X]</a>";
+          h += "</div></div>";
+        }
+    }
+    h += "</div>";
+    // ---------------------------------
+
+    h += "<form method='POST' action='/reg_seed'>NOME:<input name='n'>SEED (12 Palavras):<input name='s'><input type='submit' value='ADD SEED'></form>";
+    h += "<br><a href='/'>VOLTAR</a></div>";
+    h += "<footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com apoio da Gemini.</footer></body></html>";
+    
     server.send(200, "text/html", h);
   });
 
@@ -655,7 +810,7 @@ h += "<h2>CREEPER AUTH v6.2</h2>";
     if(ehMickey()) {
         int id = server.arg("id").toInt();
         
-        // Limpa índices de conta por padrão ao mudar de modo geral
+        // Limpa índices para não misturar as telas
         currentIndex = -1;
         currentSeedIndex = -1;
 
@@ -668,13 +823,16 @@ h += "<h2>CREEPER AUTH v6.2</h2>";
         else if (id == -3) {
             displayMode = 2;      // Modo QR Code PIX
         } 
+        else if (id == -4) {
+            displayMode = 3;      // NOVO: Modo Meteorologia (Vento/Chuva)
+            updateWeather();      // Chama a função para buscar os dados da API agora
+        }
         else {
-            displayMode = 0;      // Volta pro modo normal para exibir Token 2FA
-            currentIndex = id;    // Define qual conta do SD mostrar
+            displayMode = 0;      
+            currentIndex = id;    // Mostra Token da conta selecionada
         }
         
         forceRedraw = true; 
-        // Redireciona de volta para a home
         server.send(200, "text/html", "<script>location.href='/';</script>"); 
     }
 });
@@ -690,72 +848,97 @@ void loop() {
 
   // --- LÓGICA DE WHITELIST UDP ---
   int packetSize = udpWhitelist.parsePacket();
-  #ifdef ESP32
   if (packetSize) {
     int len = udpWhitelist.read(packetBuffer, 255);
     if (len > 0) packetBuffer[len] = 0;
     dynamicWhitelist = String(packetBuffer);
   }
-  #endif
 
   unsigned long epoch = timeClient.getEpochTime();
   int secondsLeft = 30 - (epoch % 30);
 
   // --- LÓGICA DE ATUALIZAÇÃO DA TELA ---
-  // Atualiza se o segundo mudou OU se alguém forçou o redesenho (via Touch ou Web)
   if (secondsLeft != lastSec || forceRedraw) {
-    
-    bool isRedraw = forceRedraw; // Guardamos o estado antes de resetar
-
+    bool isRedraw = forceRedraw;
     if (forceRedraw) { 
       tft.fillScreen(TFT_BLACK); 
-      forceRedraw = false; // Resetamos para o próximo ciclo
+      forceRedraw = false; 
     }
-
-    // 1. MODO SEEDS (Frase de Recuperação)
-    if (currentSeedIndex >= 0) {
-      if (isRedraw) { // Desenha apenas uma vez para não fritar o processador
-          tft.fillScreen(TFT_BLACK);
-          tft.setTextColor(TFT_ORANGE); 
-          tft.drawCentreString(seeds[currentSeedIndex].label, 120, 10, 2);
-          // ... (seu código original de quebra de palavras das Seeds permanece aqui)
-          // [Desenho das palavras das seeds conforme seu código original]
-      }
-    } 
-    
-    // 2. MODO TOTP (Contas Ativas - Precisa atualizar a cada segundo por causa da barra)
-    else if (currentIndex != -1) {
-      tft.setTextColor(TFT_YELLOW, TFT_BLACK); 
-      tft.drawCentreString(accounts[currentIndex].name, 120, 30, 4);
-      tft.setTextColor(TFT_GREEN, TFT_BLACK); 
-      tft.drawCentreString(calcTOTP(accounts[currentIndex].secretBase32, epoch), 120, 100, 7);
-      
-      // Barra de tempo (Precisa redesenhar a cada segundo)
-      tft.fillRect(20, 170, 200, 10, TFT_BLACK);
-      tft.fillRect(20, 170, map(secondsLeft, 0, 30, 0, 200), 10, (secondsLeft < 6) ? TFT_RED : TFT_BLUE);
-      
-      tft.setTextColor(TFT_WHITE, TFT_BLACK); 
-      tft.drawCentreString("P: " + accounts[currentIndex].password, 120, 195, 2);
-      drawInfo(epoch);
-    } 
-
-    // 3. MODOS STANDBY E QR CODES
-    else {
-      // MODO 0: ROSTO CREEPER
-      if (displayMode == 0) {
-        drawCreeper(); 
-        drawInfo(epoch);
-      } 
-      // MODO 1: QR WIFI (Apenas no forceRedraw)
-      else if (displayMode == 1) {
-        if (isRedraw) drawWiFiScreen(); 
-      }
-      // MODO 2: QR PIX (Apenas no forceRedraw)
-      else if (displayMode == 2) {
-        if (isRedraw) drawPixScreen(); 
-      }
-    }
-
     lastSec = secondsLeft;
+
+    // --- MODO: VAULT (SEEDS) ---
+    if (currentSeedIndex >= 0) {
+      if (isRedraw) {
+          tft.fillScreen(TFT_BLACK);
+          drawSpiderJockey(190, 5, 35); 
+
+          tft.setTextColor(TFT_ORANGE, TFT_BLACK); 
+          tft.drawCentreString("VAULT: " + seeds[currentSeedIndex].label, 100, 10, 2);
+          
+          tft.setTextColor(TFT_WHITE, TFT_BLACK);
+          String p = seeds[currentSeedIndex].phrase;
+          int y = 45, x = 15, count = 0;
+          
+          while (p.length() > 0 && count < 12) {
+            int space = p.indexOf(' ');
+            String word = (space > 0) ? p.substring(0, space) : p;
+            tft.drawString(String(count + 1) + "." + word, x, y, 2);
+            y += 25; count++;
+            if (count == 6) { x = 120; y = 45; }
+            if (space < 0) break;
+            p = p.substring(space + 1);
+          }
+          tft.fillRect(0, 210, 240, 30, tft.color565(40, 40, 40));
+          tft.setTextColor(TFT_GREEN);  tft.drawString("VER", 10, 215, 2);
+          tft.setTextColor(TFT_YELLOW); tft.drawString("EDITAR", 85, 215, 2);
+          tft.setTextColor(TFT_RED);    tft.drawString("EXCLUIR", 170, 215, 2);
+      }
+    } 
+    // --- MODO 1: QR WIFI ---
+    else if (displayMode == 1) {
+       if (isRedraw) drawWiFiScreen();
+    }
+    // --- MODO 2: QR PIX ---
+    else if (displayMode == 2) {
+       if (isRedraw) drawPixScreen();
+    }
+    // --- MODO 3: METEOROLOGIA ---
+    else if (displayMode == 3 || displayMode == 4) { // Aceita ambos os IDs configurados
+       if (isRedraw) drawWeatherScreen();
+    }
+    // --- MODO 0: CREEPER / TOTP (PADRÃO) ---
+    else {
+      if (currentIndex < 0) {
+        if (isRedraw) drawCreeper(); 
+        drawInfo(epoch); // MOSTRA HORA E IP NO MODO STANDBY
+      } else {
+        // --- LÓGICA INTELIGENTE DE NOME/EMAIL ---
+        String accountName = accounts[currentIndex].name;
+        if (accountName.indexOf('@') >= 0) {
+          tft.setTextColor(TFT_CYAN, TFT_BLACK);
+          tft.drawCentreString("CONTA:", 120, 5, 2); 
+          tft.setTextColor(TFT_WHITE, TFT_BLACK);
+          int fonteEmail = (accountName.length() > 20) ? 1 : 2;
+          tft.drawCentreString(accountName, 120, 25, fonteEmail);
+        } else {
+          tft.setTextColor(TFT_CYAN, TFT_BLACK);
+          tft.drawCentreString(accountName, 120, 10, 4);
+        }
+
+        // --- EXIBIÇÃO DO TOKEN ---
+        String code = calcTOTP(accounts[currentIndex].secretBase32, epoch);
+        tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+        tft.drawCentreString(code, 120, 85, 7);
+
+        // Barra de Tempo (30s)
+        tft.fillRect(0, 155, 240, 8, TFT_BLACK);
+        tft.fillRect(0, 155, (secondsLeft * 8), 8, (secondsLeft < 5) ? TFT_RED : TFT_GREEN);
+        
+        if (accounts[currentIndex].password != "") {
+           tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+           tft.drawCentreString("Pass: " + accounts[currentIndex].password, 120, 210, 2);
+        }
+      }
+    }
   }
 }
