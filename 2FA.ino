@@ -33,7 +33,7 @@ String cfgMODO = "REDE";
 String cfgIP   = "192.168.100."; 
 String cfgPIX = "342.049.358-42"; // Pode ser CPF, E-mail ou Chave Aleatória
 String dynamicWhitelist = ""; 
-String weatherApiKey = "fff7ce772990b49a7efd6b1a6827c687";
+String weatherApiKey = "fff7ce772990b49a7efd6b1a6827c687";//https://home.openweathermap.org/api_keys
 String city = "Bom Jesus dos Perdões, BR";
 String classificarVento(float kmh) {
   if (kmh < 5)   return "Brisa Calma";
