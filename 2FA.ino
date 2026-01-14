@@ -79,7 +79,7 @@ int currentSeedIndex = -1;
 int lastSec = -1;
 bool forceRedraw = true;
 String versaoAtual = "6.3";
-String urlVersaoGitHub = "https://raw.githubusercontent.com/Annabel369/2FA/refs/heads/main/version.txt";
+String urlVersaoGitHub = "https://raw.githubusercontent.com/Annabel369/2FA/main/version.txt";
 String versaoNova = ""; // Vai guardar a versão que o GitHub responder
 bool updateDisponivel = false;
 
@@ -92,26 +92,29 @@ bool tlsAtivado = false;
 void checkUpdate() {
   if (WiFi.status() == WL_CONNECTED) {
     WiFiClientSecure client;
-    client.setInsecure(); // Necessário para conectar no GitHub sem validar certificados complexos
+    client.setInsecure(); // Necessário para pular a checagem de certificado SSL
     
     HTTPClient http;
-    Serial.println("[Update] Checando versao no GitHub...");
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS); // Importante para o GitHub
+    
+    Serial.println("[Update] Conectando ao GitHub Raw...");
     
     if (http.begin(client, urlVersaoGitHub)) {
       int httpCode = http.GET();
       if (httpCode == 200) {
         versaoNova = http.getString();
-        versaoNova.trim(); // Remove espaços extras
+        versaoNova.trim(); // Remove espaços e pulos de linha
         
-        Serial.print("[Update] Versao local: "); Serial.println(versaoAtual);
-        Serial.print("[Update] Versao remota: "); Serial.println(versaoNova);
+        Serial.print("[Update] Versao no GitHub: "); Serial.println(versaoNova);
+        Serial.print("[Update] Versao no ESP32: "); Serial.println(versaoAtual);
 
-        if (versaoNova != versaoAtual && versaoNova != "") {
+        // Se a versão do GitHub for diferente da versão atual do código
+        if (versaoNova != "" && versaoNova != versaoAtual) {
           updateDisponivel = true;
-          Serial.println("!!! NOVA VERSAO DISPONIVEL !!!");
+          Serial.println("!!! AVISO: Versao nova encontrada !!!");
         }
       } else {
-        Serial.printf("[Update] Erro ao buscar: %s\n", http.errorToString(httpCode).c_str());
+        Serial.printf("[Update] Erro HTTP: %d\n", httpCode);
       }
       http.end();
     }
@@ -766,9 +769,9 @@ h += "</script>";
 h += "</div>"; // Fecha a div box
 h += getFooter(); // CHAMA A FUNÇÃO AQUI
 if (updateDisponivel) {
-    h += "<div style='background:#550; color:#fff; border:1px solid #ff0; padding:10px; margin-bottom:15px; font-family:monospace;'>";
-    h += "⚡ NOVA VERSAO DISPONIVEL: v" + versaoNova + " (Atual: v" + versaoAtual + ")";
-    h += "<br><a href='https://github.com/Annabel369/2FA' target='_blank' style='color:#0f0;'>[ CLIQUE AQUI PARA BAIXAR ]</a>";
+    h += "<div style='background:#330; border:1px solid #ff0; color:#ff0; padding:10px; margin:10px 0; text-align:center;'>";
+    h += "📢 <b>Nova versão disponível!</b> (v" + versaoNova + ")<br>";
+    h += "<a href='https://github.com/Annabel369/2FA' style='color:#fff; text-decoration:underline;'>Clique para atualizar</a>";
     h += "</div>";
 }
 h += "</body></html>";
