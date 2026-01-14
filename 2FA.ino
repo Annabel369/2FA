@@ -78,12 +78,37 @@ int currentIndex = -1;
 int currentSeedIndex = -1; 
 int lastSec = -1;
 bool forceRedraw = true;
+String versaoAtual = "6.3";
+String urlVersaoGitHub = "https://raw.githubusercontent.com/Annabel369/2FA/refs/heads/main/version.txt";
+String versaoNova = ""; // Vai guardar a versão que o GitHub responder
+bool updateDisponivel = false;
 
 
 WiFiClientSecure client;
 WeatherData weather;
 
 bool tlsAtivado = false;
+
+void checkUpdate() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    // O GitHub usa HTTPS, por isso usamos o client (WiFiClientSecure)
+    client.setInsecure(); // Pula a verificação de certificado para poupar memória
+    http.begin(client, urlVersaoGitHub);
+    
+    int httpCode = http.GET();
+    if (httpCode == 200) {
+      versaoNova = http.getString();
+      versaoNova.trim(); // Remove espaços ou pulos de linha
+      
+      if (versaoNova != versaoAtual) {
+        updateDisponivel = true;
+        Serial.println("--- NOVA VERSAO DISPONIVEL: " + versaoNova + " ---");
+      }
+    }
+    http.end();
+  }
+}
 
 void updateWeather() {
   if (WiFi.status() == WL_CONNECTED) {
@@ -227,6 +252,10 @@ void drawWiFiScreen() {
     tft.drawCentreString("REDE: " + cfgSSID, tft.width() / 2, 225, 2);
     tft.setTextColor(TFT_GREEN, TFT_BLACK); // Mudei para verde para destacar a chave
     tft.drawCentreString("SENHA: " + cfgPASS, tft.width() / 2, 280, 2);
+    if (updateDisponivel) {
+    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.drawCentreString("UPDATE DISPONIVEL: v" + versaoNova, 120, 290, 2);
+}
 }
 
 void drawPixScreen() {
@@ -699,6 +728,12 @@ h += "</script>";
 
 h += "</div>"; // Fecha a div box
 h += getFooter(); // CHAMA A FUNÇÃO AQUI
+if (updateDisponivel) {
+    h += "<div style='background:#f00; color:#fff; padding:10px; margin-bottom:15px; border-radius:5px; font-weight:bold;'>";
+    h += "⚠️ ATUALIZAÇÃO DISPONÍVEL: v" + versaoNova;
+    h += " <br><a href='https://github.com/SEU_USUARIO/REPO' target='_blank' style='color:#fff; border-color:#fff;'>BAIXAR AGORA</a>";
+    h += "</div>";
+}
 h += "</body></html>";
 
     server.send(200, "text/html", h);
