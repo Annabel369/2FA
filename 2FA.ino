@@ -91,22 +91,30 @@ bool tlsAtivado = false;
 
 void checkUpdate() {
   if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    // O GitHub usa HTTPS, por isso usamos o client (WiFiClientSecure)
-    client.setInsecure(); // Pula a verificação de certificado para poupar memória
-    http.begin(client, urlVersaoGitHub);
+    WiFiClientSecure client;
+    client.setInsecure(); // Necessário para conectar no GitHub sem validar certificados complexos
     
-    int httpCode = http.GET();
-    if (httpCode == 200) {
-      versaoNova = http.getString();
-      versaoNova.trim(); // Remove espaços ou pulos de linha
-      
-      if (versaoNova != versaoAtual) {
-        updateDisponivel = true;
-        Serial.println("--- NOVA VERSAO DISPONIVEL: " + versaoNova + " ---");
+    HTTPClient http;
+    Serial.println("[Update] Checando versao no GitHub...");
+    
+    if (http.begin(client, urlVersaoGitHub)) {
+      int httpCode = http.GET();
+      if (httpCode == 200) {
+        versaoNova = http.getString();
+        versaoNova.trim(); // Remove espaços extras
+        
+        Serial.print("[Update] Versao local: "); Serial.println(versaoAtual);
+        Serial.print("[Update] Versao remota: "); Serial.println(versaoNova);
+
+        if (versaoNova != versaoAtual && versaoNova != "") {
+          updateDisponivel = true;
+          Serial.println("!!! NOVA VERSAO DISPONIVEL !!!");
+        }
+      } else {
+        Serial.printf("[Update] Erro ao buscar: %s\n", http.errorToString(httpCode).c_str());
       }
+      http.end();
     }
-    http.end();
   }
 }
 
@@ -485,19 +493,47 @@ void drawCustomCreeper(int x, int y, int tam) {
 }
 
 void drawInfo(unsigned long epoch) {
-  time_t rawtime = (time_t)epoch;
-  struct tm * ti = gmtime(&rawtime);
-  char f_time[20];
-  
   // Ajuste para Horário de Brasília (UTC-3)
-  sprintf(f_time, "%02d/%02d %02d:%02d", ti->tm_mday, ti->tm_mon + 1, (ti->tm_hour + 21)%24, ti->tm_min);
+  // Como você está usando gmtime, subtraímos 3 horas (3 * 3600 segundos)
+  time_t rawtime = (time_t)epoch - (3 * 3600); 
+  struct tm * ti = localtime(&rawtime); // Usamos localtime após o ajuste
   
+  char f_time[30];
+  char f_date[30];
+  
+  // 1. Nomes dos dias da semana
+  const char* diasSemana[] = {"Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"};
+  String diaHoje = diasSemana[ti->tm_wday];
+
+  // 2. Lógica AM/PM
+  int hora = ti->tm_hour;
+  String sufixo = (hora >= 12) ? "PM" : "AM";
+  
+  // Converte formato 24h para 12h
+  if (hora == 0) hora = 12;      // Meia-noite vira 12 AM
+  else if (hora > 12) hora -= 12; // 13h vira 1 PM
+
+  // 3. Formata as Strings
+  // Data e Dia da Semana: "Sabado - 14/01"
+  sprintf(f_date, "%s - %02d/%02d", diaHoje.c_str(), ti->tm_mday, ti->tm_mon + 1);
+  
+  // Hora com segundos: "04:45:30 PM"
+  sprintf(f_time, "%02d:%02d:%02d %s", hora, ti->tm_min, ti->tm_sec, sufixo.c_str());
+  
+  // --- DESENHO NO TFT ---
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.drawCentreString(f_time, 120, 175, 4);
   
-  // Mostra o IP em Verde Matrix no visor
+  // Desenha a Data e Dia da Semana em cima (fonte menor)
+  tft.drawCentreString(f_date, 120, 165, 2); 
+  
+  // Desenha a Hora AM/PM com Segundos (fonte maior 4)
+  tft.drawCentreString(f_time, 120, 185, 4);
+  
+  // Mostra o IP em Verde Matrix
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.drawCentreString(WiFi.localIP().toString(), 120, 225, 2);
+  
+  // Mostra a condição do tempo
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
   tft.drawCentreString(weather.main, 120, 280, 4);
 }
@@ -507,6 +543,7 @@ void setup() {
   Serial.begin(115200);
   SPI.begin(18, 19, 23, SD_CS);
   tft.init(); tft.setRotation(0); tft.invertDisplay(true); tft.fillScreen(TFT_BLACK);
+  checkUpdate();
   carregarTudo();
   
   WiFi.begin(cfgSSID.c_str(), cfgPASS.c_str());
@@ -729,9 +766,9 @@ h += "</script>";
 h += "</div>"; // Fecha a div box
 h += getFooter(); // CHAMA A FUNÇÃO AQUI
 if (updateDisponivel) {
-    h += "<div style='background:#f00; color:#fff; padding:10px; margin-bottom:15px; border-radius:5px; font-weight:bold;'>";
-    h += "⚠️ ATUALIZAÇÃO DISPONÍVEL: v" + versaoNova;
-    h += " <br><a href='https://github.com/SEU_USUARIO/REPO' target='_blank' style='color:#fff; border-color:#fff;'>BAIXAR AGORA</a>";
+    h += "<div style='background:#550; color:#fff; border:1px solid #ff0; padding:10px; margin-bottom:15px; font-family:monospace;'>";
+    h += "⚡ NOVA VERSAO DISPONIVEL: v" + versaoNova + " (Atual: v" + versaoAtual + ")";
+    h += "<br><a href='https://github.com/Annabel369/2FA' target='_blank' style='color:#0f0;'>[ CLIQUE AQUI PARA BAIXAR ]</a>";
     h += "</div>";
 }
 h += "</body></html>";
