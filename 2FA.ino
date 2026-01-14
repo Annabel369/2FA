@@ -1,4 +1,4 @@
-// ===== CREEPER AUTH v6.2 - DUAL STACK + NETWORK + SEED COLUMNS (VERSÃO FINAL) =====
+// ===== CREEPER AUTH v6.3 - DUAL STACK + NETWORK + SEED COLUMNS (VERSÃO FINAL) =====
 #include <HTTPClient.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -44,6 +44,18 @@ String classificarVento(float kmh) {
   if (kmh < 117) return "TEMPESTADE";
   return "FURACAO/TORNADO";
 }
+String getFooter() {
+  // Busca a hora atualizada do servidor NTP agora
+  time_t epochTime = timeClient.getEpochTime();
+  struct tm *ptm = gmtime((time_t *)&epochTime);
+  int ano = ptm->tm_year + 1900;
+  
+  // Se o NTP ainda não sincronizou, ele vai marcar 1970. 
+  // Podemos forçar a exibição de 2026 enquanto não sincroniza:
+  if (ano < 2025) ano = 2026; 
+
+  return "<footer>'Copyright' 2025-" + String(ano) + " Criado por Amauri Bueno dos Santos com apoio da Gemini. https://github.com/Annabel369/2FA</footer>";
+}
 
 char packetBuffer[255]; 
 
@@ -55,6 +67,7 @@ struct WeatherData {
     String main; 
     String windDesc; // Para guardar o nome (Brisa, Vendaval, etc)
 };
+
 
 std::vector<TotpAccount> accounts;
 std::vector<SeedRecord> seeds;
@@ -451,11 +464,11 @@ void drawInfo(unsigned long epoch) {
   sprintf(f_time, "%02d/%02d %02d:%02d", ti->tm_mday, ti->tm_mon + 1, (ti->tm_hour + 21)%24, ti->tm_min);
   
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.drawCentreString(f_time, 120, 175, 2);
+  tft.drawCentreString(f_time, 120, 175, 4);
   
   // Mostra o IP em Verde Matrix no visor
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.drawCentreString(WiFi.localIP().toString(), 120, 215, 2);
+  tft.drawCentreString(WiFi.localIP().toString(), 120, 225, 2);
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
   tft.drawCentreString(weather.main, 120, 280, 4);
 }
@@ -618,37 +631,76 @@ if (tlsAtivado) {
 h += "<h2>CREEPER AUTH v6.2</h2>";
 
 // --- NOVO BLOCO: CONTROLO DO VISOR FÍSICO ---
-    h += "<div style='border:1px solid #444; padding:10px; margin-bottom:15px;'>";
-    h += "<p>VISOR DO DISPOSITIVO:</p>";
-    h += "<a href='https://home.openweathermap.org/api_keys' class='edit'>Api Meteorologica</a> ";
-    h += "</div>";
+    //h += "<div style='border:1px solid #444; padding:10px; margin-bottom:15px;'>";
+    //h += "<p>VISOR DO DISPOSITIVO:</p>";
+    //h += "<a href='https://home.openweathermap.org/api_keys' class='edit'>Api Meteorologica</a> ";
+    //h += "</div>";
 // --------------------------------------------
 
 
-    h += "<form action='/select'><select name='id'><option value='-1'>VISOR CREEPER</option>";
+//    h += "<form action='/select'>";
 
-// Botão WiFi
+
+//--------------------novo
+h += "<div>";
+h += "<select id='idVisor'> name='id'";
+h += "  <option value='-1'>VISOR CREEPER</option>";
 h += "  <option value='-2'>VISOR: QR CODE WIFI</option>";
-
-// Botão PIX
 h += "  <option value='-3'>VISOR: QR CODE PIX</option>";
-
-// NOVO: Botão Meteorologia
 h += "  <option value='-4'>VISOR: METEOROLOGIA (API)</option>";
 
 for(int i=0; i<accounts.size(); i++) {
     h += "<option value='"+String(i)+"'>"+accounts[i].name+"</option>";
 }
+h += "</select>";
 
-h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
+h += "<button onclick='mudarTela()' style='background:#000;color:#0f0;border:1px solid #0f0;padding:10px;width:100%;cursor:pointer;font-family:monospace;'>EXECUTAR COMANDO</button>";
+h += "<p id='statusMsg' style='height:20px; color:#ff0; font-size:0.9em; margin-top:10px;'></p>"; // Espaço para a mensagem
+h += "</div>";
+
+// JavaScript Atualizado
+h += "<script>";
+h += "function mudarTela(){";
+h += "  var sel = document.getElementById('idVisor');";
+h += "  var id = sel.value;";
+h += "  var texto = sel.options[sel.selectedIndex].text;";
+h += "  var msg = document.getElementById('statusMsg');";
+h += "  ";
+// Lógica para a mensagem personalizada
+h += "  if(id == '-1') { msg.innerHTML = '> Iniciando Rosto Creeper...'; }";
+h += "  else if(id == '-2') { msg.innerHTML = '> Gerando QR Code WiFi...'; }";
+h += "  else if(id == '-3') { msg.innerHTML = '> Chamando Pagamento PIX...'; }";
+h += "  else if(id == '-4') { msg.innerHTML = '> Consultando Meteorologia...'; }";
+h += "  else { msg.innerHTML = '> Solicitando Token: ' + texto; }";
+h += "  ";
+h += "  fetch('/select?id=' + id).then(response => {";
+h += "    if(response.ok) {";
+h += "       setTimeout(() => { msg.innerHTML = '> Comando enviado com sucesso!'; }, 500);";
+h += "       setTimeout(() => { msg.innerHTML = ''; }, 3000);"; // Limpa a mensagem após 3 segundos
+h += "    }";
+h += "  });";
+h += "}";
+h += "</script>";
+//--------------------novo
+
+
+
+//h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
 
     if(ehMickey()) {
-      h += "<a href='/vault'>VAULT</a> <a href='/manage'>TOKENS</a><br><a href='/network'>WI-FI & IP</a>";
-    } else {
-      h += "<p style='color:red'>ACESSO NEGADO: IP PROTEGIDO</p>";
-    }
+    h += "<div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px;'>";
+    h += "  <a href='/vault' style='display:block;'>📁 VAULT</a>";
+    h += "  <a href='/manage' style='display:block;'>🔑 TOKENS</a>";
+    h += "  <a href='/network' style='display:block; grid-column: span 2;'>⚙️ CONFIG WI-FI & IP</a>";
+    h += "</div>";
+} else {
+    h += "<p style='color:red'>ACESSO NEGADO: IP PROTEGIDO</p>";
+}
 
-    h += "</div><footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com apoio da Gemini. https://github.com/Annabel369/2FA</footer></body></html>";
+h += "</div>"; // Fecha a div box
+h += getFooter(); // CHAMA A FUNÇÃO AQUI
+h += "</body></html>";
+
     server.send(200, "text/html", h);
 });
 
@@ -811,34 +863,23 @@ h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
     }
   });
 
-  server.on("/select", [ehMickey]() {
+ server.on("/select", [ehMickey]() {
     if(ehMickey()) {
         int id = server.arg("id").toInt();
-        
-        // Limpa índices para não misturar as telas
         currentIndex = -1;
         currentSeedIndex = -1;
-
-        if (id == -1) {
-            displayMode = 0;      // Modo Rosto Creeper (2FA)
-        } 
-        else if (id == -2) {
-            displayMode = 1;      // Modo QR Code WiFi
-        } 
-        else if (id == -3) {
-            displayMode = 2;      // Modo QR Code PIX
-        } 
-        else if (id == -4) {
-            displayMode = 3;      // NOVO: Modo Meteorologia (Vento/Chuva)
-            updateWeather();      // Chama a função para buscar os dados da API agora
-        }
-        else {
-            displayMode = 0;      
-            currentIndex = id;    // Mostra Token da conta selecionada
-        }
         
-        forceRedraw = true; 
-        server.send(200, "text/html", "<script>location.href='/';</script>"); 
+        // Lógica de seleção (igual à sua)
+        if (id == -1) displayMode = 0;
+        else if (id == -2) displayMode = 1;
+        else if (id == -3) displayMode = 2;
+        else if (id == -4) { displayMode = 3; updateWeather(); }
+        else { displayMode = 0; currentIndex = id; }
+        
+        forceRedraw = true;
+        server.send(200, "text/plain", "OK"); // Resposta curta para o AJAX
+    } else {
+        server.send(403, "text/plain", "Negado");
     }
 });
 
