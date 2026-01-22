@@ -15,6 +15,7 @@
 #include <vector>
 #include "qrcode.h"
 #include <ArduinoJson.h> // Você precisará instalar a biblioteca ArduinoJson
+#include <TJpg_Decoder.h>
 
 #define SD_CS 5
 TFT_eSPI tft = TFT_eSPI();
@@ -86,6 +87,41 @@ WiFiClientSecure client;
 WeatherData weather;
 
 bool tlsAtivado = false;
+
+
+bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap) {
+  if ( y >= tft.height() ) return false;
+  
+  // Força o desenho do bloco de pixels
+  tft.startWrite();
+  tft.setAddrWindow(x, y, w, h);
+  tft.pushColors(bitmap, w * h, true);
+  tft.endWrite();
+  
+  return true;
+}
+
+void handleFileRead() {
+  String path = server.uri();
+  if (path.endsWith("/")) path += "index.html";
+  
+  // Define o tipo de conteúdo (MIME type)
+  String contentType = "text/plain";
+  if (path.endsWith(".html")) contentType = "text/html";
+  else if (path.endsWith(".jpg")) contentType = "image/jpeg";
+  else if (path.endsWith(".png")) contentType = "image/png";
+  else if (path.endsWith(".ico")) contentType = "image/x-icon";
+
+  // Tenta abrir o arquivo no SD
+  if (SD.exists(path)) {
+    File file = SD.open(path, "r");
+    server.streamFile(file, contentType);
+    file.close();
+    return;
+  }
+
+  server.send(404, "text/plain", "Arquivo nao encontrado no SD");
+}
 
 void checkUpdate() {
   if (WiFi.status() == WL_CONNECTED) {
@@ -542,8 +578,15 @@ void drawInfo(unsigned long epoch) {
 // --- Setup ---
 void setup() {
   Serial.begin(115200);
+  SPI.setFrequency(20000000);
   SPI.begin(18, 19, 23, SD_CS);
   tft.init(); tft.setRotation(0); tft.invertDisplay(true); tft.fillScreen(TFT_BLACK);
+// Configuração do Decodificador de Imagem
+  server.onNotFound(handleFileRead);
+  TJpgDec.setJpgScale(1);
+  TJpgDec.setCallback(tft_output);
+  tft.setSwapBytes(true);
+  
   checkUpdate();
   carregarTudo();
   
@@ -936,6 +979,20 @@ h += "</body></html>";
     }
   });
 
+// --- NOVA ROTA PARA O LINUX / YUBIKEY ---
+  server.on("/aprovado", []() {
+    // 1. Muda o modo de exibição para algo que indique sucesso
+    displayMode = 10; // Vamos criar o modo 10 para "Acesso Permitido"
+    
+    // 2. Você pode definir um tempo para a mensagem sumir (opcional)
+    forceRedraw = true;
+    
+    // 3. Responde ao Linux que o sinal foi recebido
+    server.send(200, "text/plain", "OK Amauri, Acesso Liberado!\n");
+    
+    Serial.println("Sinal recebido da Yubikey!");
+  });
+
  server.on("/select", [ehMickey]() {
     if(ehMickey()) {
         int id = server.arg("id").toInt();
@@ -1025,6 +1082,35 @@ void loop() {
     else if (displayMode == 3 || displayMode == 4) { // Aceita ambos os IDs configurados
        if (isRedraw) drawWeatherScreen();
     }
+    // --- MODO 4: ACESSO APROVADO PELA YUBIKEY ---
+    else if (displayMode == 10) {
+    if (forceRedraw) {
+        
+        //TJpgDec.drawSdJpg(0, 0, "/minecraft240.jpg");
+
+        
+        tft.drawRect(0, 0, 240, 240, TFT_GREEN);
+        tft.fillScreen(TFT_BLACK);
+        
+        // Borda Dupla Verde (Ficou ótimo!)
+        tft.drawRect(0, 0, 240, 240, TFT_GREEN);
+        tft.drawRect(1, 1, 238, 238, TFT_GREEN);
+        
+        // Chamando o Spider Jockey GRANDE centralizado
+        drawSpiderJockey(30, 40, 180);
+        
+        // Texto Principal em Ciano
+        tft.setTextColor(TFT_CYAN, TFT_BLACK);
+        tft.drawCentreString("ACESSO APROVADO", 120, 195, 4);
+        
+        // Subtexto em Amarelo (Corrigi a vírgula aqui)
+        tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+        tft.drawCentreString("YUBIKEY OK", 120, 220, 2);
+    } else {TJpgDec.drawSdJpg(0, 0, "/minecraft240.jpg");
+    tft.setTextColor(TFT_CYAN, TFT_BLACK);
+        tft.drawCentreString("ACESSO APROVADO", 120, 260, 4);
+        }
+}
     // --- MODO 0: CREEPER / TOTP (PADRÃO) ---
     else {
       if (currentIndex < 0) {
