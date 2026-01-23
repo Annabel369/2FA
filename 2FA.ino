@@ -552,23 +552,34 @@ void drawInfo(unsigned long epoch) {
 
   // 3. Formata as Strings
   // Data e Dia da Semana: "Sabado - 14/01"
-  sprintf(f_date, "%s - %02d/%02d", diaHoje.c_str(), ti->tm_mday, ti->tm_mon + 1);
+  String diaFormatado = diaHoje;
+if (ti->tm_wday >= 1 && ti->tm_wday <= 5) {
+    diaFormatado += "-feira";
+}
+
+// 2. Agora usamos a variável diaFormatado no sprintf
+sprintf(f_date, "%s - %02d/%02d/%d", 
+        diaFormatado.c_str(), 
+        ti->tm_mday, 
+        ti->tm_mon + 1, 
+        ti->tm_year + 1900);
   
   // Hora com segundos: "04:45:30 PM"
   sprintf(f_time, "%02d:%02d:%02d %s", hora, ti->tm_min, ti->tm_sec, sufixo.c_str());
   
   // --- DESENHO NO TFT ---
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
   
   // Desenha a Data e Dia da Semana em cima (fonte menor)
-  tft.drawCentreString(f_date, 120, 165, 2); 
-  
+  tft.drawCentreString(f_date, 120, 2, 2); 
+
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
   // Desenha a Hora AM/PM com Segundos (fonte maior 4)
-  tft.drawCentreString(f_time, 120, 185, 4);
+  tft.drawCentreString(f_time, 120, 200, 4);
   
   // Mostra o IP em Verde Matrix
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.drawCentreString(WiFi.localIP().toString(), 120, 225, 2);
+  tft.drawCentreString(WiFi.localIP().toString(), 120, 246, 2);
   
   // Mostra a condição do tempo
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
@@ -711,7 +722,7 @@ if (MDNS.begin("creeper")) {
   // --- Rotas ---
   server.on("/", [css, ehMickey]() {
     // Cabeçalho e CSS
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><meta name='viewport' content='width=device-width, initial-scale=1.0'><meta charset='UTF-8'>" + css + "</head><body>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='http://"+ WiFi.localIP().toString() +"/favicon.ico'><meta name='viewport' content='width=device-width, initial-scale=1.0'><meta charset='UTF-8'>" + css + "</head><body>";
     
     h += "<div class='box'>";
     
@@ -738,7 +749,7 @@ if (tlsAtivado) {
     h += "<p style='color:#666; font-size:0.8em;'>🔓 MODO INTRANET (HTTP)</p>";
 }
 
-h += "<h2>CREEPER AUTH v6.2</h2>";
+h += "<h2>CREEPER AUTH v6.3.3</h2>";
 
 // --- NOVO BLOCO: CONTROLO DO VISOR FÍSICO ---
     //h += "<div style='border:1px solid #444; padding:10px; margin-bottom:15px;'>";
@@ -822,7 +833,7 @@ h += "</body></html>";
 
   server.on("/manage", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'>><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='http://"+ WiFi.localIP().toString() +"/favicon.ico'>><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
     for(int i=0; i<accounts.size(); i++) {
       h += "<div style='margin-bottom:10px;'>" + accounts[i].name + " <br>";
       h += "<a href='/edit?id="+String(i)+"' class='edit'>[E] EDITAR</a> ";
@@ -859,7 +870,7 @@ h += "</body></html>";
   // --- NOVA ROTA: FORMULÁRIO PARA ADICIONAR ---
   server.on("/add", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>NOVO TOKEN</h2><form method='POST' action='/reg'>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='http://"+ WiFi.localIP().toString() +"/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>NOVO TOKEN</h2><form method='POST' action='/reg'>";
     h += "NOME (Ex: Discord):<input name='u'>SECRET (Base32):<input name='s'>SENHA (Opcional):<input name='p'><input type='submit' value='CRIAR TOKEN'></form><br><a href='/manage'>VOLTAR</a></div></body></html>";
     server.send(200, "text/html", h);
   });
@@ -879,7 +890,7 @@ h += "</body></html>";
     if(!ehMickey()) return server.send(403, "Negado");
     int id = server.arg("id").toInt();
     TotpAccount acc = accounts[id];
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>EDITAR TOKEN</h2><form method='POST' action='/update?id="+String(id)+"'>'";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='http://"+ WiFi.localIP().toString() +"/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>EDITAR TOKEN</h2><form method='POST' action='/update?id="+String(id)+"'>'";
     h += "NOME:<input name='u' value='"+acc.name+"'>SECRET:<input name='s' value='"+acc.secretBase32+"'>PASS:<input name='p' value='"+acc.password+"'><input type='submit' value='SALVAR ALTERAÇÕES'></form></div></body></html>";
     server.send(200, "text/html", h);
   });
@@ -898,7 +909,7 @@ h += "</body></html>";
 
   server.on("/network", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' action='/net_save'>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='http://"+ WiFi.localIP().toString() +"/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"+css+"</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' action='/net_save'>";
     h += "SSID:<input name='ss' value='"+cfgSSID+"'>PASS:<input name='pw' value='"+cfgPASS+"'>";
     h += "MODO:<select name='mo'><option value='REDE' "+(String(cfgMODO=="REDE"?"selected":""))+">REDE (Prefixo)</option>";
     h += "<option value='UNICO' "+(String(cfgMODO=="UNICO"?"selected":""))+">IP UNICO</option></select>";
@@ -918,7 +929,7 @@ h += "</body></html>";
   server.on("/vault", [css, ehMickey](){
     if(!ehMickey()) return server.send(403, "Negado");
     
-    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='https://www.minecraft.net/etc.clientlibs/minecraftnet/clientlibs/clientlib-site/resources/favicon.ico'><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>" + css + "</head><body>";
+    String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' type='image/x-icon' href='http://"+ WiFi.localIP().toString() +"/favicon.ico'><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>" + css + "</head><body>";
     h += "<div class='box'><h2>CRYPTO VAULT</h2>";
     
     // --- LISTAGEM DAS SEEDS SALVAS ---
@@ -1101,14 +1112,14 @@ void loop() {
         
         // Texto Principal em Ciano
         tft.setTextColor(TFT_CYAN, TFT_BLACK);
-        tft.drawCentreString("ACESSO APROVADO", 120, 195, 4);
+        tft.drawCentreString("Toque na Yubikey!", 120, 195, 4);
         
         // Subtexto em Amarelo (Corrigi a vírgula aqui)
         tft.setTextColor(TFT_YELLOW, TFT_BLACK);
         tft.drawCentreString("YUBIKEY OK", 120, 220, 2);
     } else {TJpgDec.drawSdJpg(0, 0, "/minecraft240.jpg");
     tft.setTextColor(TFT_CYAN, TFT_BLACK);
-        tft.drawCentreString("ACESSO APROVADO", 120, 260, 4);
+        tft.drawCentreString("Toque na Yubikey!", 120, 260, 4);
         }
 }
     // --- MODO 0: CREEPER / TOTP (PADRÃO) ---
