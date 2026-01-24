@@ -25,6 +25,15 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60000);
 WebServer server(80);
 FtpServer ftpSrv;
 
+// --- DECLARAÇÕES GLOBAIS PARA O MONITOR DO PC ---
+WiFiUDP udpPC;             
+unsigned int portPC = 5005; 
+char bufferPC[255];        
+int pcFPS = 0;
+int pcGPU = 0;
+int pcTemp = 0;
+// ------------------------------------------------
+
 // Configurações e Whitelist
 String cfgSSID = "Maria Cristina 4G";
 String cfgPASS = "1247bfam";
@@ -153,6 +162,47 @@ void checkUpdate() {
       http.end();
     }
   }
+}
+
+void drawPCPerformance() {
+  tft.fillScreen(TFT_BLACK);
+  // Estilo Matrix/Creeper
+  tft.drawRect(0, 0, 240, 240, TFT_GREEN);
+  tft.drawRect(2, 2, 236, 236, TFT_GREEN);
+  
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.drawCentreString("NVIDIA INFO", 120, 15, 2);
+  
+  // FPS em destaque
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  // --- LÓGICA DO FPS (LIMITE 999) ---
+  int fpsExibir = pcFPS;
+  if (fpsExibir > 999) fpsExibir = 999; // Trava o limite
+  if (fpsExibir < 0) fpsExibir = 0;     // Evita números negativos
+
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  
+  // Criamos uma string com espaços para "limpar" o rastro do número anterior
+  // O "  " no final é o segredo para não picar a tela
+  String txtFPS = String(fpsExibir) + " "; 
+  
+  // Desenha o número grande (Fonte 7) centralizado um pouco para a esquerda
+  tft.drawCentreString(txtFPS, 110, 50, 7); 
+  
+  // Desenha o "FPS" menor (Fonte 4) fixo ao lado
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.drawString("FPS", 175, 75, 4);
+  
+  // Barras de Carga
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.drawString("GPU LOAD: " + String(pcGPU) + "%", 30, 140, 4);
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+  tft.fillRect(30, 165, (pcGPU * 1.8), 10, TFT_YELLOW); // Barra dinâmica
+  
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString("GPU TEMP: " + String(pcTemp) + "C", 30, 190, 4);
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+  tft.fillRect(30, 215, (pcTemp * 2), 10, (pcTemp > 75) ? TFT_RED : TFT_YELLOW);
 }
 
 void updateWeather() {
@@ -594,6 +644,8 @@ void setup() {
   tft.init(); tft.setRotation(0); tft.invertDisplay(true); tft.fillScreen(TFT_BLACK);
 // Configuração do Decodificador de Imagem
   server.onNotFound(handleFileRead);
+
+
   TJpgDec.setJpgScale(1);
   TJpgDec.setCallback(tft_output);
   tft.setSwapBytes(true);
@@ -624,6 +676,7 @@ if (MDNS.begin("creeper")) {
 
   timeClient.begin();
   udpWhitelist.begin(1234);
+  udpPC.begin(portPC);
 
  auto ehMickey = []() {
     String clientIP = server.client().remoteIP().toString();
@@ -769,6 +822,7 @@ h += "  <option value='-1'>VISOR CREEPER</option>";
 h += "  <option value='-2'>VISOR: QR CODE WIFI</option>";
 h += "  <option value='-3'>VISOR: QR CODE PIX</option>";
 h += "  <option value='-4'>VISOR: METEOROLOGIA (API)</option>";
+h += "  <option value='-5'>VISOR: PERFORMANCE PC</option>"; // <-- ADICIONE ESTA LINHA
 
 for(int i=0; i<accounts.size(); i++) {
     h += "<option value='"+String(i)+"'>"+accounts[i].name+"</option>";
@@ -792,6 +846,7 @@ h += "  if(id == '-1') { msg.innerHTML = '> Iniciando Rosto Creeper...'; }";
 h += "  else if(id == '-2') { msg.innerHTML = '> Gerando QR Code WiFi...'; }";
 h += "  else if(id == '-3') { msg.innerHTML = '> Chamando Pagamento PIX...'; }";
 h += "  else if(id == '-4') { msg.innerHTML = '> Consultando Meteorologia...'; }";
+h += "  else if(id == '-5') { msg.innerHTML = '> Monitorando Hardware Debian...'; }"; // <-- ADICIONE ESTA
 h += "  else { msg.innerHTML = '> Solicitando Token: ' + texto; }";
 h += "  ";
 h += "  fetch('/select?id=' + id).then(response => {";
@@ -1004,6 +1059,18 @@ h += "</body></html>";
     Serial.println("Sinal recebido da Yubikey!");
   });
 
+server.on("/pcstats", [ehMickey]() {
+  if(ehMickey()) {
+    displayMode = 5; // Modo que criamos para o Monitor de Performance
+    currentIndex = -1;
+    currentSeedIndex = -1;
+    forceRedraw = true;
+    server.send(200, "text/plain", "Monitor de Performance Ativado!");
+  } else {
+    server.send(403, "text/plain", "Negado");
+  }
+});
+
  server.on("/select", [ehMickey]() {
     if(ehMickey()) {
         int id = server.arg("id").toInt();
@@ -1015,6 +1082,7 @@ h += "</body></html>";
         else if (id == -2) displayMode = 1;
         else if (id == -3) displayMode = 2;
         else if (id == -4) { displayMode = 3; updateWeather(); }
+        else if (id == -5) displayMode = 5; // <--- SEU NOVO MONITOR DE PC
         else { displayMode = 0; currentIndex = id; }
         
         forceRedraw = true;
@@ -1032,6 +1100,18 @@ void loop() {
   server.handleClient();
   ftpSrv.handleFTP();
   timeClient.update();
+
+  int pcPacket = udpPC.parsePacket();
+  if (pcPacket) {
+    int len = udpPC.read(bufferPC, 255);
+    if (len > 0) bufferPC[len] = 0;
+    
+    // Quebra a string "FPS,GPU,TEMP" enviada pelo seu Python
+    sscanf(bufferPC, "%d,%d,%d", &pcFPS, &pcGPU, &pcTemp);
+    
+    // Se você quiser que o FPS atualize na hora, force o redesenho:
+    if(displayMode == 5) forceRedraw = true; 
+  }
 
   // --- LÓGICA DE WHITELIST UDP ---
   int packetSize = udpWhitelist.parsePacket();
@@ -1093,7 +1173,10 @@ void loop() {
     else if (displayMode == 3 || displayMode == 4) { // Aceita ambos os IDs configurados
        if (isRedraw) drawWeatherScreen();
     }
-    // --- MODO 4: ACESSO APROVADO PELA YUBIKEY ---
+    else if (displayMode == 5) {
+       if (isRedraw) drawPCPerformance();
+    }
+    // --- MODO 10: ACESSO APROVADO PELA YUBIKEY ---
     else if (displayMode == 10) {
     if (forceRedraw) {
         
