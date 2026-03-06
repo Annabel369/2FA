@@ -86,6 +86,7 @@ int currentIndex = -1;
 int currentSeedIndex = -1; 
 int lastSec = -1;
 bool forceRedraw = true;
+bool ftpAtivo = false; // Começa desligado
 String versaoAtual = "6.3";
 String urlVersaoGitHub = "https://raw.githubusercontent.com/Annabel369/2FA/main/version.txt";
 String versaoNova = ""; // Vai guardar a versão que o GitHub responder
@@ -668,6 +669,11 @@ void setup() {
   Serial.println("-------------------------");
   Serial.println("FTP PORTA 21 User: creeper, Pass: 1234");
   Serial.println("ftp://creeper:1234@192.168.100.49/");
+   if (ftpAtivo) {
+    Serial.println("FTP Ligado");
+  } else {
+    Serial.println("FTP Desligado");
+  }
   Serial.println("-------------------------");
   // No setup, após conectar no Wi-Fi:
 if (MDNS.begin("creeper")) {
@@ -801,6 +807,14 @@ if (tlsAtivado) {
 } else {
     h += "<p style='color:#666; font-size:0.8em;'>🔓 MODO INTRANET (HTTP)</p>";
 }
+
+// --- INÍCIO DO BOTÃO LIGA/DESLIGA FTP ---
+h += "<div style='margin: 15px auto; width: 90%; border: 1px solid " + String(ftpAtivo ? "#0f0" : "#444") + "; padding: 10px;'>";
+h += "<small>FTP SERVER: " + String(ftpAtivo ? "<b style='color:#0f0'>ON</b>" : "<b style='color:#666'>OFF</b>") + "</small><br>";
+h += "<a href='/toggleFTP' style='display:block; margin-top:10px; border-color:" + String(ftpAtivo ? "#f00" : "#0f0") + "; color:" + String(ftpAtivo ? "#f00" : "#0f0") + ";'>" 
+     + String(ftpAtivo ? "DESLIGAR FTP" : "LIGAR FTP") + "</a>";
+h += "</div>";
+// --- FIM DO BOTÃO LIGA/DESLIGA FTP ---
 
 h += "<h2>CREEPER AUTH v6.3.3</h2>";
 
@@ -1071,6 +1085,25 @@ server.on("/pcstats", [ehMickey]() {
   }
 });
 
+server.on("/toggleFTP", [ehMickey]() {
+  if (!ehMickey()) return; 
+
+  if (!ftpAtivo) {
+    // Inicia o servidor se estiver desligado
+    ftpSrv.begin("creeper", "1234");
+    ftpAtivo = true;
+    Serial.println("FTP Ativado");
+  } else {
+    // Apenas muda a variável para false. 
+    // O seu 'loop' vai parar de chamar o ftpSrv.handleFTP()
+    ftpAtivo = false;
+    Serial.println("FTP Desativado (Processamento parado)");
+  }
+  
+  server.sendHeader("Location", "/");
+  server.send(303);
+});
+
  server.on("/select", [ehMickey]() {
     if(ehMickey()) {
         int id = server.arg("id").toInt();
@@ -1093,13 +1126,19 @@ server.on("/pcstats", [ehMickey]() {
 });
 
   server.begin();
-  ftpSrv.begin("creeper", "1234");
+
+  //ftpSrv.begin("creeper", "1234"); // Usuário e senha que você já usa
+  
 }
 
 void loop() {
   server.handleClient();
   ftpSrv.handleFTP();
   timeClient.update();
+  
+  if (ftpAtivo) {
+    ftpSrv.handleFTP();
+  }
 
   int pcPacket = udpPC.parsePacket();
   if (pcPacket) {
