@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Restrito - Creeper Security</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #0d0d0d; 
+            color: #e0e0e0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+        }
+        .login-card { 
+            background: #181818; 
+            padding: 30px; 
+            border-radius: 12px; 
+            border: 2px solid #00ff44; 
+            box-shadow: 0 0 20px rgba(0, 255, 68, 0.2); 
+            width: 100%; 
+            max-width: 360px; 
+            text-align: center; 
+        }
+        /* Rostinho Pixelado do Creeper em CSS puro */
+        .creeper-face { 
+            width: 80px; 
+            height: 80px; 
+            background-color: #00ff44; 
+            margin: 0 auto 20px auto; 
+            position: relative; 
+            box-shadow: inset 0 0 10px #000;
+        }
+        /* Olhos */
+        .creeper-face::before {
+            content: '';
+            position: absolute;
+            top: 16px; left: 12px;
+            width: 20px; height: 20px;
+            background: #000;
+            box-shadow: 36px 0 0 #000;
+        }
+        /* Nariz e Boca */
+        .creeper-face::after {
+            content: '';
+            position: absolute;
+            top: 36px; left: 28px;
+            width: 24px; height: 32px;
+            background: #000;
+            /* Recortes característicos do Creeper */
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 66% 100%, 66% 50%, 33% 50%, 33% 100%, 0 100%);
+        }
+        h2 { color: #00ff44; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        p { color: #888; font-size: 12px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; font-size: 12px; color: #00ff44; margin-bottom: 5px; font-weight: bold; }
+        input { 
+            width: 100%; 
+            padding: 10px; 
+            background: #222; 
+            border: 1px solid #333; 
+            border-radius: 6px; 
+            color: #fff; 
+            font-size: 14px; 
+            outline: none; 
+        }
+        input:focus { border-color: #00ff44; }
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            background: #00ff44; 
+            color: #000; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            font-size: 14px; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            transition: 0.2s; 
+        }
+        button:hover { background: #00cc37; box-shadow: 0 0 10px rgba(0, 255, 68, 0.4); }
+        #error-msg { color: #ff4444; font-size: 13px; margin-top: 12px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="creeper-face"></div>
+    <h2>SD Security</h2>
+    <p>Autenticação do Gerenciador ESP32</p>
+
+    <form id="loginForm" onsubmit="realizarLogin(event)">
+        <div class="input-group">
+            <label>USUÁRIO</label>
+            <input type="text" id="user" required autocomplete="off" placeholder="admin">
+        </div>
+        <div class="input-group">
+            <label>SENHA</label>
+            <input type="password" id="pass" required placeholder="••••••••">
+        </div>
+        <button type="submit">💥 Entrar no Sistema</button>
+    </form>
+
+    <div id="error-msg">❌ Usuário ou Senha incorretos!</div>
+</div>
+
+<script>
+async function realizarLogin(e) {
+    e.preventDefault();
+    const u = document.getElementById('user').value;
+    const p = document.getElementById('pass').value;
+    const errDiv = document.getElementById('error-msg');
+
+    errDiv.style.display = 'none';
+
+    // Envia requisição de validação para o ESP32
+    const formData = new FormData();
+    formData.append('user', u);
+    formData.append('pass', p);
+
+    try {
+        const resp = await fetch('/doLogin', { method: 'POST', body: formData });
+        if (resp.ok) {
+            window.location.href = '/list.html';
+        } else {
+            errDiv.style.display = 'block';
+        }
+    } catch (err) {
+        errDiv.innerText = 'Erro na conexão com ESP32';
+        errDiv.style.display = 'block';
+    }
+}
+</script>
+
+</body>
+</html>

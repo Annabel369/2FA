@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Arquivo - ESP32</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: monospace; background-color: #121212; color: #e0e0e0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        h3 { color: #00ff66; word-break: break-all; }
+        textarea { width: 100%; height: 450px; background: #1a1a1a; color: #00ff66; border: 1px solid #333; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 4px; resize: vertical; }
+        .btn-bar { margin-top: 15px; display: flex; gap: 10px; }
+        button, a { padding: 10px 20px; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; text-decoration: none; text-align: center; }
+        .btn-save { background: #00ff66; color: #000; }
+        .btn-save:hover { background: #00cc52; }
+        .btn-cancel { background: #444; color: #fff; }
+        .btn-cancel:hover { background: #666; }
+        #msg { margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h3 id="file-title">Editando: ...</h3>
+    </div>
+
+    <textarea id="editor" placeholder="Carregando conteúdo do arquivo..."></textarea>
+
+    <div class="btn-bar">
+        <button class="btn-save" onclick="salvarArquivo()">💾 Salvar Alterações</button>
+        <a href="/list.html" class="btn-cancel">⬅️ Voltar / Cancelar</a>
+    </div>
+
+    <div id="msg"></div>
+</div>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const filePath = urlParams.get('file');
+
+document.getElementById('file-title').innerText = 'Editando: ' + (filePath || 'Nenhum arquivo');
+
+async function carregarConteudo() {
+    if (!filePath) {
+        document.getElementById('editor').value = 'Erro: Nenhum arquivo especificado na URL.';
+        return;
+    }
+
+    try {
+        // Busca o conteúdo bruto do arquivo diretamente do servidor WebServer do ESP32
+        const resp = await fetch(filePath);
+        if (!resp.ok) throw new Error('Não foi possível ler o arquivo ' + filePath);
+        const text = await resp.text();
+        document.getElementById('editor').value = text;
+    } catch (err) {
+        document.getElementById('msg').style.color = '#ff4444';
+        document.getElementById('msg').innerText = 'Erro ao carregar: ' + err.message;
+    }
+}
+
+async function salvarArquivo() {
+    const conteudo = document.getElementById('editor').value;
+    const msgDiv = document.getElementById('msg');
+    msgDiv.style.color = '#ffcc00';
+    msgDiv.innerText = 'Salvando...';
+
+    try {
+        const formData = new FormData();
+        formData.append('file', filePath);
+        formData.append('data', conteudo);
+
+        const resp = await fetch('/saveXARQ', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (resp.ok) {
+            msgDiv.style.color = '#00ff66';
+            msgDiv.innerText = '✅ Arquivo salvo com sucesso!';
+        } else {
+            throw new Error('Falha no servidor ao salvar.');
+        }
+    } catch (err) {
+        msgDiv.style.color = '#ff4444';
+        msgDiv.innerText = '❌ Erro ao salvar: ' + err.message;
+    }
+}
+
+window.onload = carregarConteudo;
+</script>
+
+</body>
+</html>

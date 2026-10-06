@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reprodutor de Mídia ESP32</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header-bar {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #bb86fc;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-nav {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+        .btn-home {
+            background-color: #333333;
+            color: #ffffff;
+            border: 1px solid #555;
+        }
+        .btn-home:hover {
+            background-color: #444444;
+        }
+        .btn-logout {
+            background-color: #cf6679;
+            color: #000000;
+        }
+        .btn-logout:hover {
+            background-color: #b00020;
+            color: #ffffff;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+        }
+        .video-list-container {
+            flex: 1;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            max-height: 600px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .upload-section {
+            background-color: #2a2a2a;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 1px dashed #bb86fc;
+        }
+        .upload-section input[type="file"] {
+            display: none;
+        }
+        .upload-btn {
+            display: block;
+            text-align: center;
+            background-color: #03dac6;
+            color: #000;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .upload-btn:hover {
+            background-color: #00b3a1;
+        }
+        .video-player-container {
+            flex: 2;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            position: relative;
+            min-height: 350px;
+        }
+        video {
+            width: 100%;
+            max-height: 600px;
+            border-radius: 4px;
+            outline: none;
+            background-color: #000;
+        }
+        .video-item {
+            padding: 12px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            word-break: break-all;
+            border-radius: 4px;
+        }
+        .video-item:hover {
+            background-color: #333;
+            color: #bb86fc;
+        }
+        .video-item:last-child {
+            border-bottom: none;
+        }
+        .active {
+            background-color: #333;
+            color: #03dac6;
+            font-weight: bold;
+        }
+        .btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #bb86fc;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #9965f4;
+        }
+
+        /* --- OVERLAY E BARRA DE PROGRESSO RETRO --- */
+        .progress-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 18, 18, 0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            border-radius: 8px;
+            transition: opacity 0.3s ease;
+        }
+        .progress-box {
+            width: 80%;
+            max-width: 400px;
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #444;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        .progress-bar-container {
+            width: 100%;
+            height: 28px;
+            background-color: #111;
+            border: 2px solid #ffffff;
+            border-radius: 6px;
+            padding: 2px;
+            box-sizing: border-box;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: repeating-linear-gradient(
+                90deg,
+                #7bc643,
+                #7bc643 12px,
+                #111 12px,
+                #111 15px
+            );
+            border-radius: 2px;
+            transition: width 0.15s ease;
+        }
+        .progress-footer {
+            margin-top: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #aaaaaa;
+            letter-spacing: 2px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column-reverse;
+            }
+            .header-bar {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar">
+        <h1>Reprodutor de Mídia SD</h1>
+        <div class="nav-buttons">
+            <button class="btn-nav btn-home" id="btn-back">⬅ Voltar (Home)</button>
+            <button class="btn-nav btn-logout" id="btn-logout">🚪 Sair</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Lista de Mídias e Upload -->
+        <div class="video-list-container">
+            <div class="upload-section">
+                <label for="file-input" class="upload-btn">➕ Enviar Arquivo para SD</label>
+                <input type="file" id="file-input" accept=".mp4,.mkv,.mp3,.m4a,.webm,.avi">
+            </div>
+
+            <h3 style="margin-top: 0;">Arquivos no Cartão SD</h3>
+            <div id="video-list">Carregando mídias...</div>
+        </div>
+        
+        <!-- Player de Vídeo com Barra Retro -->
+        <div class="video-player-container">
+            <!-- Tela de Carregamento Estilo Retro -->
+            <div id="loading-overlay" class="progress-overlay" style="display: none;">
+                <div class="progress-box">
+                    <div class="progress-header">
+                        <span id="loader-title">Loading...</span>
+                        <span id="loader-percent">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div id="loader-bar" class="progress-bar-fill"></div>
+                    </div>
+                    <div class="progress-footer">PLEASE WAIT...</div>
+                </div>
+            </div>
+
+            <video id="player" controls preload="metadata">
+                Seu navegador não suporta a tag de vídeo.
+            </video>
+            <h3 id="current-video-title" style="margin-top: 15px; color: #03dac6; text-align: center;">Nenhum vídeo selecionado</h3>
+            <button class="btn" id="fullscreen-btn">Alternar Tela Cheia</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoListEl = document.getElementById('video-list');
+            const player = document.getElementById('player');
+            const currentVideoTitle = document.getElementById('current-video-title');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const fileInput = document.getElementById('file-input');
+            const btnBack = document.getElementById('btn-back');
+            const btnLogout = document.getElementById('btn-logout');
+
+            // Elementos da Barra Retro
+            const overlay = document.getElementById('loading-overlay');
+            const loaderTitle = document.getElementById('loader-title');
+            const loaderPercent = document.getElementById('loader-percent');
+            const loaderBar = document.getElementById('loader-bar');
+
+            const mediaExtensions = ['.mkv', '.mp4', '.m4a', '.mp3', '.avi', '.webm', '.ogg'];
+
+            function showLoader(title = "Loading...") {
+                loaderTitle.textContent = title;
+                loaderPercent.textContent = "0%";
+                loaderBar.style.width = "0%";
+                overlay.style.display = 'flex';
+            }
+
+            function updateLoader(percent) {
+                const p = Math.min(100, Math.max(0, Math.round(percent)));
+                loaderPercent.textContent = p + "%";
+                loaderBar.style.width = p + "%";
+            }
+
+            function hideLoader() {
+                overlay.style.display = 'none';
+            }
+
+            // --- NAVEGAÇÃO / AÇÕES DE BOTÃO ---
+            btnBack.addEventListener('click', () => {
+                showLoader("Voltando à Home...");
+                updateLoader(40);
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 150);
+            });
+
+            btnLogout.addEventListener('click', () => {
+                if (confirm("Deseja realmente encerrar a sessão?")) {
+                    showLoader("Encerrando sessão...");
+                    updateLoader(70);
+                    window.location.href = '/logout';
+                }
+            });
+
+            // --- BUSCA LISTA DO SD ---
+            function loadFileList() {
+                showLoader("Carregando Mídias...");
+                updateLoader(15);
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+                fetch('/json', { signal: controller.signal })
+                    .then(response => {
+                        clearTimeout(timeoutId);
+                        if (response.status === 401) {
+                            window.location.href = '/login.html';
+                            throw new Error('Sessão expirada. Redirecionando para login...');
+                        }
+                        if (!response.ok) {
+                            throw new Error('Falha HTTP: ' + response.status);
+                        }
+                        updateLoader(60);
+                        return response.json();
+                    })
+                    .then(data => {
+                        updateLoader(85);
+                        videoListEl.innerHTML = '';
+                        
+                        const mediaFiles = data.filter(item => {
+                            if (item.type === 'dir' || item.isDir) return false;
+                            const name = (item.name || '').toLowerCase();
+                            return mediaExtensions.some(ext => name.endsWith(ext));
+                        });
+
+                        if (mediaFiles.length === 0) {
+                            videoListEl.innerHTML = '<p style="color:#aaa;">Nenhum arquivo de mídia encontrado no SD.</p>';
+                            hideLoader();
+                            return;
+                        }
+
+                        mediaFiles.forEach(fileObj => {
+                            const div = document.createElement('div');
+                            div.className = 'video-item';
+                            div.textContent = `${fileObj.name} (${formatBytes(fileObj.size)})`;
+                            
+                            div.addEventListener('click', () => {
+                                document.querySelectorAll('.video-item').forEach(el => el.classList.remove('active'));
+                                div.classList.add('active');
+                                playVideo(fileObj.name);
+                            });
+                            
+                            videoListEl.appendChild(div);
+                        });
+                        
+                        updateLoader(100);
+                        setTimeout(hideLoader, 250);
+                    })
+                    .catch(err => {
+                        hideLoader();
+                        if (err.name === 'AbortError') {
+                            videoListEl.innerHTML = '<p style="color:#cf6679;">Tempo limite excedido ao conectar ao SD.</p>';
+                        } else if (err.message && err.message.includes('login')) {
+                            videoListEl.innerHTML = '<p style="color:#cf6679;">Redirecionando para a tela de login...</p>';
+                        } else {
+                            videoListEl.innerHTML = `<p style="color:#cf6679;">Erro ao ler o cartão SD: ${err.message || 'desconhecido'}</p>`;
+                        }
+                        console.error('Erro na requisição:', err);
+                    });
+            }
+
+            // --- REPRODUÇÃO DE VÍDEO SEM TRAVAMENTOS ---
+            function playVideo(filename) {
+                showLoader("Abrindo vídeo...");
+                updateLoader(10);
+                currentVideoTitle.textContent = filename;
+                
+                // Interrompe execução atual e limpa buffer para evitar leak de memória/trava no ESP32
+                player.pause();
+                player.removeAttribute('src');
+                player.load();
+                
+                let cleanName = filename.startsWith('/') ? filename.substring(1) : filename;
+                let encodedPath = '/' + encodeURIComponent(cleanName).replace(/%2F/g, '/');
+                
+                player.src = encodedPath;
+                player.load();
+            }
+
+            // Monitoramento de buffer de vídeo
+            player.addEventListener('progress', () => {
+                if (player.buffered.length > 0 && player.duration > 0) {
+                    const bufferedEnd = player.buffered.end(player.buffered.length - 1);
+                    const percent = (bufferedEnd / player.duration) * 100;
+                    updateLoader(percent);
+                }
+            });
+
+            player.addEventListener('waiting', () => {
+                showLoader("Carregando Buffer...");
+            });
+
+            player.addEventListener('canplay', () => {
+                updateLoader(100);
+                setTimeout(hideLoader, 200);
+                player.play().catch(e => console.log("Aguardando interação do usuário para reproduzir:", e));
+            });
+
+            player.addEventListener('error', () => {
+                hideLoader();
+                alert("Erro ao reproduzir o arquivo. Formato não suportado ou erro de leitura do SD.");
+            });
+
+            // --- UPLOAD DE ARQUIVOS ---
+            fileInput.addEventListener('change', () => {
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                let safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                if (!safeName.startsWith('/')) safeName = '/' + safeName;
+
+                const formData = new FormData();
+                formData.append("data", file, safeName);
+
+                const xhr = new XMLHttpRequest();
+                showLoader("Enviando...");
+
+                xhr.upload.addEventListener("progress", (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        updateLoader(percent);
+                    }
+                });
+
+                xhr.addEventListener("load", () => {
+                    if (xhr.status === 200) {
+                        updateLoader(100);
+                        setTimeout(() => {
+                            hideLoader();
+                            alert("Upload concluído com sucesso!");
+                            fileInput.value = "";
+                            loadFileList();
+                        }, 300);
+                    } else {
+                        hideLoader();
+                        alert("Erro no servidor: Status " + xhr.status);
+                    }
+                });
+
+                xhr.addEventListener("error", () => {
+                    hideLoader();
+                    alert("Erro de conexão ao enviar arquivo para o ESP32.");
+                });
+
+                xhr.open("POST", "/upload");
+                xhr.send(formData);
+            });
+
+            function formatBytes(bytes) {
+                if (bytes === 0 || isNaN(bytes)) return '0 B';
+                if (bytes < 1024) return bytes + ' B';
+                else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                else return (bytes / 1048576).toFixed(2) + ' MB';
+            }
+
+            // Alternar Tela Cheia
+            fullscreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    if (player.requestFullscreen) player.requestFullscreen();
+                    else if (player.webkitRequestFullscreen) player.webkitRequestFullscreen();
+                    else if (player.msRequestFullscreen) player.msRequestFullscreen();
+                } else {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                }
+            });
+
+            // Reprodução Sequencial Automática
+            player.addEventListener('ended', () => {
+                const activeItem = document.querySelector('.video-item.active');
+                if (activeItem && activeItem.nextElementSibling) {
+                    activeItem.nextElementSibling.click();
+                }
+            });
+
+            // Inicializar a lista ao abrir
+            loadFileList();
+        });
+    </script>
+</body>
+</html>

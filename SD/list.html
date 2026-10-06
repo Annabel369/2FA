@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Arquivos - ESP32</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; padding: 20px; position: relative; min-height: 100vh; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ff66; padding-bottom: 10px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        h2 { color: #00ff66; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .path-bar { background: #1a1a1a; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; font-family: monospace; color: #00ff66; border: 1px solid #333; }
+        
+        .btn-act-head { color: #000; border: none; padding: 8px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; }
+        .btn-home { background: #bb86fc; }
+        .btn-home:hover { background: #9965f4; }
+        .btn-new { background: #03dac6; }
+        .btn-new:hover { background: #00b3a1; }
+        .btn-refresh { background: #00ff66; }
+        .btn-refresh:hover { background: #00cc52; }
+        .btn-logout { background: #ff4444; color: #fff; }
+        .btn-logout:hover { background: #cc0000; }
+        
+        table { width: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #2a2a2a; }
+        th { background-color: #252525; color: #00ff66; font-size: 13px; text-transform: uppercase; }
+        tr:hover { background-color: #222222; }
+        .folder-row { cursor: pointer; user-select: none; }
+        .folder-row:hover { background-color: #0d3822 !important; }
+        .back-row { cursor: pointer; background: #202020; font-weight: bold; color: #ffcc00; }
+        .back-row:hover { background: #333 !important; }
+        .hidden-item { opacity: 0.5; font-style: italic; }
+        .tag-oculto { font-size: 10px; background: #444; color: #fff; padding: 2px 6px; border-radius: 3px; margin-left: 6px; }
+        .btn-act { text-decoration: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; margin-right: 5px; }
+        .btn-down { background: #0d3846; color: #00bcff; }
+        .btn-edit { background: #46380d; color: #ffcc00; }
+        .btn-del { background: #460d0d; color: #ff4444; }
+        .loading { text-align: center; padding: 20px; font-size: 16px; color: #888; }
+
+        /* --- OVERLAY DE CARREGAMENTO RETRO --- */
+        .progress-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 18, 18, 0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            transition: opacity 0.3s ease;
+        }
+        .progress-box {
+            width: 80%;
+            max-width: 400px;
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #00ff66;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+            text-align: center;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        .progress-bar-container {
+            width: 100%;
+            height: 26px;
+            background-color: #111;
+            border: 2px solid #ffffff;
+            border-radius: 6px;
+            padding: 2px;
+            box-sizing: border-box;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: repeating-linear-gradient(
+                90deg,
+                #00ff66,
+                #00ff66 12px,
+                #111 12px,
+                #111 15px
+            );
+            border-radius: 2px;
+            transition: width 0.2s ease;
+        }
+        .progress-footer {
+            margin-top: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #aaaaaa;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Overlay Retro de Carregamento -->
+<div id="loading-overlay" class="progress-overlay" style="display: none;">
+    <div class="progress-box">
+        <div class="progress-header">
+            <span id="loader-title">Lendo SD...</span>
+            <span id="loader-percent">0%</span>
+        </div>
+        <div class="progress-bar-container">
+            <div id="loader-bar" class="progress-bar-fill"></div>
+        </div>
+        <div class="progress-footer">AGUARDE...</div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h2>📂 Gerenciador de Arquivos do SD</h2>
+        <div class="btn-group">
+            <a href="/" class="btn-act-head btn-home">🏠 Inicio</a>
+            <button class="btn-act-head btn-new" onclick="criarNovoArquivo()">📝 Novo TXT</button>
+            <button class="btn-act-head btn-refresh" onclick="carregarArquivos(currentPath)">🔄 Atualizar</button>
+            <button class="btn-act-head btn-logout" onclick="fazerLogout()">🚪 Sair</button>
+        </div>
+    </div>
+
+    <div class="path-bar" id="current-path">Diretório: /</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Caminho / Nome</th>
+                <th>Tamanho</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-arquivos">
+            <tr><td colspan="4" class="loading">Iniciando leitura...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+let currentPath = '/';
+
+// Controles da Barra Retro
+const overlay = document.getElementById('loading-overlay');
+const loaderTitle = document.getElementById('loader-title');
+const loaderPercent = document.getElementById('loader-percent');
+const loaderBar = document.getElementById('loader-bar');
+
+function showLoader(title = "Lendo SD...") {
+    loaderTitle.textContent = title;
+    loaderPercent.textContent = "0%";
+    loaderBar.style.width = "0%";
+    overlay.style.display = 'flex';
+}
+
+function updateLoader(percent) {
+    const p = Math.min(100, Math.max(0, Math.round(percent)));
+    loaderPercent.textContent = p + "%";
+    loaderBar.style.width = p + "%";
+}
+
+function hideLoader() {
+    overlay.style.display = 'none';
+}
+
+function encodePath(path) {
+    return path.split('/').map(part => encodeURIComponent(part)).join('/');
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0 || isNaN(bytes)) return '--';
+    if (bytes < 1024) return bytes + ' B';
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / 1048576).toFixed(2) + ' MB';
+}
+
+function fazerLogout() {
+    const host = window.location.host;
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", "/logout", true, "invalid_user", "invalid_pass");
+    xhr.send();
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            window.location.href = "http://logout:logout@" + host + "/logout";
+        }
+    };
+}
+
+function criarNovoArquivo() {
+    let nome = prompt("Digite o nome do novo arquivo (ex: notas.txt):");
+    if (!nome) return;
+    
+    // Força extensão .txt se não tiver extensão
+    if (!nome.includes('.')) nome += '.txt';
+    
+    let fullPath = currentPath === '/' ? '/' + nome : currentPath + '/' + nome;
+    window.location.href = `/edit.html?file=${encodeURIComponent(fullPath)}`;
+}
+
+async function carregarArquivos(dirPath) {
+    currentPath = dirPath;
+    document.getElementById('current-path').innerText = 'Diretório: ' + currentPath;
+
+    const tbody = document.getElementById('tabela-arquivos');
+    
+    showLoader("Lendo Diretório...");
+    updateLoader(25);
+    try {
+        const response = await fetch('/json?dir=' + encodeURIComponent(currentPath));
+        if (response.status === 401) {
+            window.location.href = '/login.html';
+            return;
+        }
+        updateLoader(65);
+        
+        if (!response.ok) throw new Error('Erro ao ler SD (status ' + response.status + ')');
+        
+        const arquivos = await response.json();
+        updateLoader(85);
+        
+        tbody.innerHTML = '';
+
+        if (currentPath !== '/' && currentPath !== '') {
+            const trVoltar = document.createElement('tr');
+            trVoltar.className = 'back-row';
+            trVoltar.innerHTML = '<td colspan="4">⬅️ <b>[ VOLTAR PARA A PASTA ANTERIOR ]</b></td>';
+            trVoltar.onclick = () => {
+                let parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+                if (parentPath === '') parentPath = '/';
+                carregarArquivos(parentPath);
+            };
+            tbody.appendChild(trVoltar);
+        }
+
+        if (arquivos.length === 0) {
+            const trVazio = document.createElement('tr');
+            trVazio.innerHTML = '<td colspan="4" class="loading">Pasta vazia.</td>';
+            tbody.appendChild(trVazio);
+            updateLoader(100);
+            setTimeout(hideLoader, 200);
+            return;
+        }
+
+        arquivos.forEach(item => {
+            const nomeSimples = item.name.split('/').pop();
+
+            if (nomeSimples.toLowerCase() === 'listpass.txt') return;
+
+            const tr = document.createElement('tr');
+            const isHidden = nomeSimples.startsWith('.');
+            if (isHidden) tr.classList.add('hidden-item');
+
+            let tipoTd = '';
+            if (item.isDir) {
+                tipoTd = '📁 <b>[PASTA]</b>';
+                tr.classList.add('folder-row');
+                tr.title = 'Clique duplo para entrar na pasta';
+                tr.ondblclick = () => carregarArquivos(item.name);
+            } else if (isHidden) {
+                tipoTd = '👻 <i>[OCULTO]</i>';
+            } else {
+                tipoTd = '📄 ARQUIVO';
+            }
+
+            let nomeTd = item.name + (isHidden ? ' <span class="tag-oculto">(oculto)</span>' : '');
+            let tamanhoTd = item.isDir ? '--' : formatBytes(item.size);
+
+            let acoesTd = '';
+            if (!item.isDir) {
+                let rawPath = item.name.startsWith('/') ? item.name : '/' + item.name;
+                let safePath = encodePath(rawPath);
+
+                acoesTd += `<a href="${safePath}" download class="btn-act btn-down">⬇️ Baixar</a> `;
+                
+                if (/\.(txt|log|json|ini|html|css|js)$/i.test(rawPath)) {
+                    acoesTd += `<a href="/edit.html?file=${encodeURIComponent(rawPath)}" class="btn-act btn-edit">✏️ Editar</a> `;
+                }
+
+                acoesTd += `<a href="/deleteXARQ?file=${encodeURIComponent(rawPath)}" onclick="return confirm('Excluir arquivo?')" class="btn-act btn-del">❌ Excluir</a>`;
+            } else {
+                acoesTd = '<small style="color:#00ff66;">(Duplo clique para abrir)</small>';
+            }
+
+            tr.innerHTML = `
+                <td>${tipoTd}</td>
+                <td>${nomeTd}</td>
+                <td>${tamanhoTd}</td>
+                <td>${acoesTd}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+        updateLoader(100);
+        setTimeout(hideLoader, 300);
+
+    } catch (err) {
+        hideLoader();
+        tbody.innerHTML = `<tr><td colspan="4" style="color:#ff4444; text-align:center; padding:20px;">❌ Falha ao carregar lista do SD: ${err.message}</td></tr>`;
+    }
+}
+
+window.onload = () => carregarArquivos('/');
+</script>
+
+</body>
+</html>
