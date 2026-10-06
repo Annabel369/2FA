@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurador 2FATouch - Gerador allconfigs.h</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #151d2f;
+      --card-header: #1c273e;
+      --border: #24324f;
+      --border-focus: #10b981;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --primary-active: #047857;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+      --code-bg: #080d1a;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px 16px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .creeper-icon {
+      width: 48px;
+      height: 48px;
+      background: #10b981;
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      padding: 4px;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+    }
+    .creeper-eye { background: #0b0f19; }
+
+    .header-title h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-title p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #0b0f19;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover {
+      background: var(--card-bg);
+      border-color: var(--text-muted);
+    }
+
+    .btn-secondary {
+      background: #1e293b;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: #334155;
+    }
+
+    /* MAIN LAYOUT */
+    .layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      background: var(--card-header);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-header h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* GRID FORMS */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-desc {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: -3px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select {
+      background: #0d1424;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    /* TOGGLE SWITCH */
+    .switch-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0d1424;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .switch-label {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .switch-label span:first-child {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #e2e8f0;
+    }
+
+    .switch-label span:last-child {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* CODE PREVIEW */
+    .preview-card {
+      position: sticky;
+      top: 24px;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 48px);
+    }
+
+    .preview-body {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .code-container {
+      background: var(--code-bg);
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+      max-height: 580px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      white-space: pre;
+      line-height: 1.45;
+      tab-size: 2;
+    }
+
+    .code-container::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .code-container::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+
+    .preview-footer {
+      background: var(--card-header);
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* BADGE */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: #0b0f19;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* FILE INPUT HIDDEN */
+    #fileInput {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- CABEÇALHO -->
+  <header class="header">
+    <div class="header-title">
+      <div class="creeper-icon" title="Creeper Auth">
+        <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+        <div></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div></div><div></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div></div>
+        <div></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div></div><div></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div></div>
+        <div></div><div></div><div></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div></div><div></div><div></div>
+        <div></div><div></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div></div><div></div>
+        <div></div><div></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div class="creeper-eye"></div><div></div><div></div>
+        <div></div><div></div><div class="creeper-eye"></div><div></div><div></div><div class="creeper-eye"></div><div></div><div></div>
+        <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+      </div>
+      <div>
+        <h1>Configurador 2FATouch <span class="badge">ESP32 CYD</span></h1>
+        <p>Gere e exporte o arquivo <code>allconfigs.h</code> com suas credenciais, pinagem e calibração</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()">
+        📂 Importar allconfigs.h
+      </button>
+      <input type="file" id="fileInput" accept=".h,.txt" onchange="importFile(event)">
+      <button class="btn btn-secondary" onclick="restoreDefaults()">
+        🔄 Restaurar Padrões
+      </button>
+      <button class="btn btn-primary" onclick="downloadConfig()">
+        📥 Baixar allconfigs.h
+      </button>
+    </div>
+  </header>
+
+  <!-- FORMULÁRIO E PREVIEW -->
+  <div class="layout">
+    
+    <!-- COLUNA DA ESQUERDA: FORMULÁRIOS -->
+    <div class="forms-column">
+      
+      <!-- SEÇÃO 1: REDE WI-FI -->
+      <div class="card">
+        <div class="card-header">
+          <h2>📶 Rede Wi-Fi & Conectividade</h2>
+          <span class="badge">Básico</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="cfgSSID">Nome da Rede Wi-Fi (SSID)</label>
+              <input type="text" id="cfgSSID" value="Maria Cristina 4G" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="cfgPASS">Senha do Wi-Fi</label>
+              <input type="text" id="cfgPASS" value="1247bfam" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="cfgMODO">Modo de Operação</label>
+              <select id="cfgMODO" onchange="updateCode()">
+                <option value="REDE" selected>REDE (Conectar no Roteador)</option>
+                <option value="AP">AP (Ponto de Acesso Próprio)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cfgIP">Prefixo de IP / Sub-rede</label>
+              <input type="text" id="cfgIP" value="192.168.100." oninput="updateCode()">
+              <span class="input-desc">Usado na busca ou IP estático</span>
+            </div>
+            <div class="form-group full-width">
+              <label for="dynamicWhitelist">Whitelist Inicial (IPs ou Domínios)</label>
+              <input type="text" id="dynamicWhitelist" value="" placeholder="Deixe vazio ou insira IP permitido" oninput="updateCode()">
+              <span class="input-desc">Whitelist dinâmica via UDP ou controle de acesso</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 2: PAGAMENTOS & QR CODES -->
+      <div class="card">
+        <div class="card-header">
+          <h2>💸 Pagamentos & QR Codes</h2>
+          <span class="badge">Telas 2 e 6</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label for="cfgPIX">Chave PIX (Modo 2)</label>
+              <input type="text" id="cfgPIX" value="810924f7-69b3-4116-8d8f-692e4a25c251" oninput="updateCode()">
+              <span class="input-desc">Chave aleatória, CPF, e-mail ou celular para gerar o QR Code no display</span>
+            </div>
+            <div class="form-group full-width">
+              <label for="cfgWiser">Link de Pagamento Wise (Modo 6)</label>
+              <input type="text" id="cfgWiser" value="wise.com/pay/me/amauribuenodossantoss" oninput="updateCode()">
+              <span class="input-desc">Link do perfil Wise para geração de QR Code internacional</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 3: CLIMA E TEMPO -->
+      <div class="card">
+        <div class="card-header">
+          <h2>🌤️ Meteorologia (OpenWeatherMap)</h2>
+          <span class="badge">Telas 3 e 4</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="weatherApiKey">Chave de API (OpenWeather)</label>
+              <input type="text" id="weatherApiKey" value="fff7ce772990b49a7efd6b1a6827c687" oninput="updateCode()">
+              <span class="input-desc">Obtido em home.openweathermap.org</span>
+            </div>
+            <div class="form-group">
+              <label for="city">Cidade e País</label>
+              <input type="text" id="city" value="Bom Jesus dos Perdões, BR" oninput="updateCode()">
+              <span class="input-desc">Exemplo: São Paulo, BR ou Lisboa, PT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 4: HARDWARE & PINAGEM CYD -->
+      <div class="card">
+        <div class="card-header">
+          <h2>⚡ Pinos de Hardware & Periféricos</h2>
+          <span class="badge">Conectores CYD</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="PINO_RELE_LUZ">Pino Relé Luz/Abajur</label>
+              <input type="number" id="PINO_RELE_LUZ" value="22" oninput="updateCode()">
+              <span class="input-desc">Pino livre traseiro (padrão: 22)</span>
+            </div>
+            <div class="form-group">
+              <label for="PINO_SERVO">Pino Servo Motor Creeper</label>
+              <input type="number" id="PINO_SERVO" value="27" oninput="updateCode()">
+              <span class="input-desc">Pino livre traseiro (padrão: 27)</span>
+            </div>
+            <div class="form-group">
+              <label for="SD_CS">Pino SD Card CS</label>
+              <input type="number" id="SD_CS" value="5" oninput="updateCode()">
+              <span class="input-desc">Chip Select do leitor SD (padrão: 5)</span>
+            </div>
+            <div class="form-group">
+              <label for="PIN_RED">LED RGB - Vermelho (Red)</label>
+              <input type="number" id="PIN_RED" value="4" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="PIN_GREEN">LED RGB - Verde (Green)</label>
+              <input type="number" id="PIN_GREEN" value="16" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="PIN_BLUE">LED RGB - Azul (Blue)</label>
+              <input type="number" id="PIN_BLUE" value="17" oninput="updateCode()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 5: TOUCH XPT2046 & CALIBRAÇÃO -->
+      <div class="card">
+        <div class="card-header">
+          <h2>👆 Touch Screen XPT2046 (Pinos & Calibração)</h2>
+          <span class="badge">Calibração</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="XPT2046_CS">Touch CS</label>
+              <input type="number" id="XPT2046_CS" value="33" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="XPT2046_IRQ">Touch IRQ</label>
+              <input type="number" id="XPT2046_IRQ" value="36" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="XPT2046_CLK">Touch CLK</label>
+              <input type="number" id="XPT2046_CLK" value="25" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="XPT2046_MOSI">Touch MOSI</label>
+              <input type="number" id="XPT2046_MOSI" value="32" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="XPT2046_MISO">Touch MISO</label>
+              <input type="number" id="XPT2046_MISO" value="39" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="TOUCH_MIN_RAW_X">RAW X Mínimo</label>
+              <input type="number" id="TOUCH_MIN_RAW_X" value="2350" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="TOUCH_MAX_RAW_X">RAW X Máximo</label>
+              <input type="number" id="TOUCH_MAX_RAW_X" value="3650" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="TOUCH_MIN_RAW_Y">RAW Y Mínimo</label>
+              <input type="number" id="TOUCH_MIN_RAW_Y" value="200" oninput="updateCode()">
+            </div>
+            <div class="form-group">
+              <label for="TOUCH_MAX_RAW_Y">RAW Y Máximo</label>
+              <input type="number" id="TOUCH_MAX_RAW_Y" value="3700" oninput="updateCode()">
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 10px;">
+            <div class="switch-group">
+              <div class="switch-label">
+                <span>Inverter Eixo X (TOUCH_INVERT_X)</span>
+                <span>Inverte o toque horizontal se estiver espelhado</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="TOUCH_INVERT_X" onchange="updateCode()">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-group">
+              <div class="switch-label">
+                <span>Inverter Eixo Y (TOUCH_INVERT_Y)</span>
+                <span>Inverte o toque vertical se estiver invertido</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="TOUCH_INVERT_Y" onchange="updateCode()">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-group">
+              <div class="switch-label">
+                <span>Trocar Eixos X/Y (TOUCH_SWAP_XY)</span>
+                <span>Troca as coordenadas X e Y de lugar</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="TOUCH_SWAP_XY" onchange="updateCode()">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 6: SISTEMA, PC MONITOR & VERSÃO -->
+      <div class="card">
+        <div class="card-header">
+          <h2>🖥️ Monitor do PC, Tela Inicial & Atualização</h2>
+          <span class="badge">Avançado</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="displayMode">Tela Inicial ao Ligar</label>
+              <select id="displayMode" onchange="updateCode()">
+                <option value="0">0 - Creeper / TOTP (Padrão)</option>
+                <option value="1" selected>1 - QR Code Wi-Fi</option>
+                <option value="2">2 - QR Code PIX</option>
+                <option value="3">3 - Meteorologia (Tempo)</option>
+                <option value="5">5 - Monitor do PC (FPS/GPU)</option>
+                <option value="6">6 - QR Code Wise</option>
+                <option value="7">7 - Scanner Wi-Fi Touch</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="portPC">Porta UDP Monitor PC</label>
+              <input type="number" id="portPC" value="5005" oninput="updateCode()">
+              <span class="input-desc">Porta recebida pelo script Python</span>
+            </div>
+            <div class="form-group">
+              <label for="versaoAtual">Versão do Firmware</label>
+              <input type="text" id="versaoAtual" value="2.2" oninput="updateCode()">
+            </div>
+            <div class="form-group full-width">
+              <label for="urlVersaoGitHub">URL de Checagem de Atualização (GitHub)</label>
+              <input type="text" id="urlVersaoGitHub" value="https://raw.githubusercontent.com/Annabel369/2FATouch/main/version.json" oninput="updateCode()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUNA DA DIREITA: PREVIEW DO CÓDIGO -->
+    <div class="preview-column">
+      <div class="card preview-card">
+        <div class="card-header">
+          <h2>📄 Pré-visualização: allconfigs.h</h2>
+          <span class="badge" id="linesBadge">139 linhas</span>
+        </div>
+        <div class="preview-body">
+          <div class="code-container" id="codePreview"></div>
+        </div>
+        <div class="preview-footer">
+          <button class="btn btn-secondary" onclick="copyCode()">
+            📋 Copiar Código
+          </button>
+          <button class="btn btn-primary" onclick="downloadConfig()">
+            📥 Baixar allconfigs.h
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">allconfigs.h baixado com sucesso!</div>
+
+<script>
+  // Função que compila os valores e gera o conteúdo completo de allconfigs.h
+  function generateAllConfigsContent() {
+    const ssid = document.getElementById('cfgSSID').value;
+    const pass = document.getElementById('cfgPASS').value;
+    const modo = document.getElementById('cfgMODO').value;
+    const ip = document.getElementById('cfgIP').value;
+    const pix = document.getElementById('cfgPIX').value;
+    const wiser = document.getElementById('cfgWiser').value;
+    const whitelist = document.getElementById('dynamicWhitelist').value;
+    const weatherKey = document.getElementById('weatherApiKey').value;
+    const city = document.getElementById('city').value;
+
+    const rele = document.getElementById('PINO_RELE_LUZ').value || 22;
+    const servo = document.getElementById('PINO_SERVO').value || 27;
+    const sdCs = document.getElementById('SD_CS').value || 5;
+    const pinR = document.getElementById('PIN_RED').value || 4;
+    const pinG = document.getElementById('PIN_GREEN').value || 16;
+    const pinB = document.getElementById('PIN_BLUE').value || 17;
+
+    const xptCs = document.getElementById('XPT2046_CS').value || 33;
+    const xptIrq = document.getElementById('XPT2046_IRQ').value || 36;
+    const xptClk = document.getElementById('XPT2046_CLK').value || 25;
+    const xptMosi = document.getElementById('XPT2046_MOSI').value || 32;
+    const xptMiso = document.getElementById('XPT2046_MISO').value || 39;
+
+    const rawMinX = document.getElementById('TOUCH_MIN_RAW_X').value || 2350;
+    const rawMaxX = document.getElementById('TOUCH_MAX_RAW_X').value || 3650;
+    const rawMinY = document.getElementById('TOUCH_MIN_RAW_Y').value || 200;
+    const rawMaxY = document.getElementById('TOUCH_MAX_RAW_Y').value || 3700;
+
+    const invX = document.getElementById('TOUCH_INVERT_X').checked ? "true" : "false";
+    const invY = document.getElementById('TOUCH_INVERT_Y').checked ? "true" : "false";
+    const swapXY = document.getElementById('TOUCH_SWAP_XY').checked ? "true" : "false";
+
+    const displayMode = document.getElementById('displayMode').value || 1;
+    const portPc = document.getElementById('portPC').value || 5005;
+    const versao = document.getElementById('versaoAtual').value || "2.2";
+    const urlVer = document.getElementById('urlVersaoGitHub').value;
+
+    return `#pragma once
+#include <Arduino.h>
+
+// ====================================================================
+// BIBLIOTECAS DO SISTEMA
+// ====================================================================
+// ===== CREEPER AUTH v7.2.2 - DUAL STACK + NETWORK + SEED COLUMNS (VERSÃO
+// FINAL)
+// =====
+#include "mbedtls/md.h"
+#include "qrcode.h"
+#include <ArduinoJson.h> 
+#include <ESP32FtpServer.h> // Você precisará instalar a biblioteca ESP32FtpServer ela vem com tudo
+#include <ESPmDNS.h>
+#include <FS.h>
+#include <HTTPClient.h>
+#include <NTPClient.h>
+#include <SD.h>
+#include <SPI.h>
+#include <TFT_eSPI.h>
+#include <TJpg_Decoder.h>
+#include <WebServer.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <WiFiUdp.h>
+#include <mbedtls/base64.h>
+#include <vector>
+// --- TOUCH DO CYD ---
+#include <ESP32Servo.h>
+#include <XPT2046_Touchscreen.h>
+Servo servoCreeper;
+const int PINO_RELE_LUZ =
+    ${rele}; // Alterado de 26 para 22 (livre no conector traseiro)
+const int PINO_SERVO = ${servo}; // Mantido no 27 (livre no conector traseiro)
+unsigned long tempoAberto = 0;
+bool hardwareAtivo = false;
+#define XPT2046_IRQ ${xptIrq}
+#define XPT2046_MOSI ${xptMosi}
+#define XPT2046_MISO ${xptMiso}
+#define XPT2046_CLK ${xptClk}
+#define XPT2046_CS ${xptCs}
+SPIClass touchscreenSPI = SPIClass(HSPI);
+XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
+#define SD_CS ${sdCs}
+TFT_eSPI tft = TFT_eSPI();
+WiFiUDP ntpUDP;
+WiFiUDP udpWhitelist;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60000);
+WebServer server(80);
+FtpServer ftpSrv;
+File uploadFile;
+// --- DECLARAÇÕES GLOBAIS PARA O MONITOR DO PC ---
+WiFiUDP udpPC;
+unsigned int portPC = ${portPc};
+char bufferPC[255];
+int pcFPS = 0;
+int pcGPU = 0;
+int pcTemp = 0;
+// ------------------------------------------------
+// Configurações e Whitelist
+String cfgSSID = "${ssid}";
+String cfgPASS = "${pass}";
+String cfgMODO = "${modo}";
+String cfgIP = "${ip}";
+String cfgPIX = "${pix}"; // Pode ser CPF, E-mail ou Chave Aleatória
+String cfgWiser =
+    "${wiser}"; // Wiser banco de conversao de Moedas
+String dynamicWhitelist = "${whitelist}";
+String weatherApiKey =
+    "${weatherKey}"; // https://home.openweathermap.org/api_keys
+String city = "${city}";
+
+char packetBuffer[255];
+struct TotpAccount {
+  String name;
+  String secretBase32;
+  String password;
+};
+struct SeedRecord {
+  String label;
+  String phrase;
+};
+struct WeatherData {
+  float temp;
+  float windSpeed;
+  String main;
+  String windDesc; // Para guardar o nome (Brisa, Vendaval, etc)
+  int code;
+};
+const char *headerkeys[] = {"Range", "Authorization"};
+const size_t headerkeyssize = sizeof(headerkeys) / sizeof(char *);
+const int PIN_RED = ${pinR};
+const int PIN_GREEN = ${pinG};
+const int PIN_BLUE = ${pinB};
+std::vector<TotpAccount> accounts;
+std::vector<SeedRecord> seeds;
+// Variáveis Globais
+int displayMode = ${displayMode}; // Começa no rosto do Creeper ou modo selecionado
+int currentIndex = -1;
+int currentSeedIndex = -1;
+int lastSec = -1;
+bool forceRedraw = true;
+bool sessaoAtiva = false; // Controle de sessão customizado
+// --- DECLARAÇÕES E FUNÇÕES DE CARREGAMENTO (LOADING SCREEN) ---
+
+// --- CONFIGURAÇÕES DE CALIBRAÇÃO CIRÚRGICA DO TOUCH XPT2046 ---
+const int TOUCH_MIN_RAW_X = ${rawMinX};// defalt 200 ou 300 folga 1000
+const int TOUCH_MAX_RAW_X = ${rawMaxX};// defalt 3700 ou 3000 ou 3250
+const int TOUCH_MIN_RAW_Y = ${rawMinY};
+const int TOUCH_MAX_RAW_Y = ${rawMaxY};
+const bool TOUCH_INVERT_X =
+    ${invX}; // Mude para true se o toque horizontal estiver espelhado
+const bool TOUCH_INVERT_Y =
+    ${invY}; // Mude para true se o toque vertical estiver espelhado
+const bool TOUCH_SWAP_XY =
+    ${swapXY}; // Mude para true se os eixos X e Y estiverem trocados
+
+// --- VARIÁVEIS E FUNÇÕES DO PORTAL DE CONFIGURAÇÃO WI-FI TOUCH (MODO 7) ---
+int wifiSetupState = 0; // 0 = Selecionar SSID (Scan), 1 = Teclado de Senha
+std::vector<String> scannedSSIDs;
+std::vector<int32_t> scannedRSSI;
+String selectedSSID = "";
+String inputWifiPass = "";
+bool shiftActive = false;
+int wifiScanPage = 0;
+
+String versaoAtual = "${versao}";
+String urlVersaoGitHub = "${urlVer}";
+String versaoNova = "";
+bool updateDisponivel = false;
+
+WiFiClientSecure client;
+WeatherData weather;
+bool tlsAtivado = false;
+`;
+  }
+
+  // Atualiza o painel de código em tempo real
+  function updateCode() {
+    const code = generateAllConfigsContent();
+    document.getElementById('codePreview').textContent = code;
+    const lines = code.split('\n').length;
+    document.getElementById('linesBadge').textContent = lines + " linhas";
+  }
+
+  // Faz o download do arquivo allconfigs.h
+  function downloadConfig() {
+    const code = generateAllConfigsContent();
+    const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'allconfigs.h';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('allconfigs.h baixado com sucesso!');
+  }
+
+  // Copia o código para a área de transferência
+  function copyCode() {
+    const code = generateAllConfigsContent();
+    navigator.clipboard.writeText(code).then(() => {
+      showToast('Código copiado para a área de transferência!');
+    });
+  }
+
+  // Mostra notificação rápida
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => {
+      t.classList.remove('show');
+    }, 3000);
+  }
+
+  // Restaura os padrões originais
+  function restoreDefaults() {
+    document.getElementById('cfgSSID').value = "Maria Cristina 4G";
+    document.getElementById('cfgPASS').value = "1247bfam";
+    document.getElementById('cfgMODO').value = "REDE";
+    document.getElementById('cfgIP').value = "192.168.100.";
+    document.getElementById('cfgPIX').value = "810924f7-69b3-4116-8d8f-692e4a25c251";
+    document.getElementById('cfgWiser').value = "wise.com/pay/me/amauribuenodossantoss";
+    document.getElementById('dynamicWhitelist').value = "";
+    document.getElementById('weatherApiKey').value = "fff7ce772990b49a7efd6b1a6827c687";
+    document.getElementById('city').value = "Bom Jesus dos Perdões, BR";
+
+    document.getElementById('PINO_RELE_LUZ').value = 22;
+    document.getElementById('PINO_SERVO').value = 27;
+    document.getElementById('SD_CS').value = 5;
+    document.getElementById('PIN_RED').value = 4;
+    document.getElementById('PIN_GREEN').value = 16;
+    document.getElementById('PIN_BLUE').value = 17;
+
+    document.getElementById('XPT2046_CS').value = 33;
+    document.getElementById('XPT2046_IRQ').value = 36;
+    document.getElementById('XPT2046_CLK').value = 25;
+    document.getElementById('XPT2046_MOSI').value = 32;
+    document.getElementById('XPT2046_MISO').value = 39;
+
+    document.getElementById('TOUCH_MIN_RAW_X').value = 2350;
+    document.getElementById('TOUCH_MAX_RAW_X').value = 3650;
+    document.getElementById('TOUCH_MIN_RAW_Y').value = 200;
+    document.getElementById('TOUCH_MAX_RAW_Y').value = 3700;
+
+    document.getElementById('TOUCH_INVERT_X').checked = false;
+    document.getElementById('TOUCH_INVERT_Y').checked = false;
+    document.getElementById('TOUCH_SWAP_XY').checked = false;
+
+    document.getElementById('displayMode').value = 1;
+    document.getElementById('portPC').value = 5005;
+    document.getElementById('versaoAtual').value = "2.2";
+    document.getElementById('urlVersaoGitHub').value = "https://raw.githubusercontent.com/Annabel369/2FATouch/main/version.json";
+
+    updateCode();
+    showToast('Valores restaurados para os padrões!');
+  }
+
+  // Importa um allconfigs.h existente do computador do usuário
+  function importFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const text = evt.target.result;
+      
+      function extractString(name) {
+        const regex = new RegExp(`String\\s+${name}\\s*=\\s*\"([^\"]*)\"`, 'i');
+        const match = text.match(regex);
+        return match ? match[1] : null;
+      }
+
+      function extractInt(name) {
+        const regex = new RegExp(`(?:const\\s+int|int|unsigned\\s+int)\\s+${name}\\s*=\\s*([0-9]+)`, 'i');
+        const match = text.match(regex);
+        return match ? match[1] : null;
+      }
+
+      function extractDefine(name) {
+        const regex = new RegExp(`#define\\s+${name}\\s+([0-9]+)`, 'i');
+        const match = text.match(regex);
+        return match ? match[1] : null;
+      }
+
+      function extractBool(name) {
+        const regex = new RegExp(`(?:const\\s+bool|bool)\\s+${name}\\s*=\\s*(true|false)`, 'i');
+        const match = text.match(regex);
+        return match ? (match[1] === 'true') : null;
+      }
+
+      if (extractString('cfgSSID')) document.getElementById('cfgSSID').value = extractString('cfgSSID');
+      if (extractString('cfgPASS')) document.getElementById('cfgPASS').value = extractString('cfgPASS');
+      if (extractString('cfgMODO')) document.getElementById('cfgMODO').value = extractString('cfgMODO');
+      if (extractString('cfgIP')) document.getElementById('cfgIP').value = extractString('cfgIP');
+      if (extractString('cfgPIX')) document.getElementById('cfgPIX').value = extractString('cfgPIX');
+      if (extractString('cfgWiser')) document.getElementById('cfgWiser').value = extractString('cfgWiser');
+      if (extractString('dynamicWhitelist')) document.getElementById('dynamicWhitelist').value = extractString('dynamicWhitelist');
+      if (extractString('weatherApiKey')) document.getElementById('weatherApiKey').value = extractString('weatherApiKey');
+      if (extractString('city')) document.getElementById('city').value = extractString('city');
+
+      if (extractInt('PINO_RELE_LUZ')) document.getElementById('PINO_RELE_LUZ').value = extractInt('PINO_RELE_LUZ');
+      if (extractInt('PINO_SERVO')) document.getElementById('PINO_SERVO').value = extractInt('PINO_SERVO');
+      if (extractDefine('SD_CS')) document.getElementById('SD_CS').value = extractDefine('SD_CS');
+      if (extractInt('PIN_RED')) document.getElementById('PIN_RED').value = extractInt('PIN_RED');
+      if (extractInt('PIN_GREEN')) document.getElementById('PIN_GREEN').value = extractInt('PIN_GREEN');
+      if (extractInt('PIN_BLUE')) document.getElementById('PIN_BLUE').value = extractInt('PIN_BLUE');
+
+      if (extractDefine('XPT2046_CS')) document.getElementById('XPT2046_CS').value = extractDefine('XPT2046_CS');
+      if (extractDefine('XPT2046_IRQ')) document.getElementById('XPT2046_IRQ').value = extractDefine('XPT2046_IRQ');
+      if (extractDefine('XPT2046_CLK')) document.getElementById('XPT2046_CLK').value = extractDefine('XPT2046_CLK');
+      if (extractDefine('XPT2046_MOSI')) document.getElementById('XPT2046_MOSI').value = extractDefine('XPT2046_MOSI');
+      if (extractDefine('XPT2046_MISO')) document.getElementById('XPT2046_MISO').value = extractDefine('XPT2046_MISO');
+
+      if (extractInt('TOUCH_MIN_RAW_X')) document.getElementById('TOUCH_MIN_RAW_X').value = extractInt('TOUCH_MIN_RAW_X');
+      if (extractInt('TOUCH_MAX_RAW_X')) document.getElementById('TOUCH_MAX_RAW_X').value = extractInt('TOUCH_MAX_RAW_X');
+      if (extractInt('TOUCH_MIN_RAW_Y')) document.getElementById('TOUCH_MIN_RAW_Y').value = extractInt('TOUCH_MIN_RAW_Y');
+      if (extractInt('TOUCH_MAX_RAW_Y')) document.getElementById('TOUCH_MAX_RAW_Y').value = extractInt('TOUCH_MAX_RAW_Y');
+
+      if (extractBool('TOUCH_INVERT_X') !== null) document.getElementById('TOUCH_INVERT_X').checked = extractBool('TOUCH_INVERT_X');
+      if (extractBool('TOUCH_INVERT_Y') !== null) document.getElementById('TOUCH_INVERT_Y').checked = extractBool('TOUCH_INVERT_Y');
+      if (extractBool('TOUCH_SWAP_XY') !== null) document.getElementById('TOUCH_SWAP_XY').checked = extractBool('TOUCH_SWAP_XY');
+
+      if (extractInt('displayMode')) document.getElementById('displayMode').value = extractInt('displayMode');
+      if (extractInt('portPC')) document.getElementById('portPC').value = extractInt('portPC');
+      if (extractString('versaoAtual')) document.getElementById('versaoAtual').value = extractString('versaoAtual');
+      if (extractString('urlVersaoGitHub')) document.getElementById('urlVersaoGitHub').value = extractString('urlVersaoGitHub');
+
+      updateCode();
+      showToast('Configurações importadas do arquivo!');
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  // Inicializa a tela com o código montado
+  updateCode();
+</script>
+
+</body>
+</html>
