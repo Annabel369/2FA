@@ -18,7 +18,7 @@ void setup() {
   SPI.begin(18, 19, 23, SD_CS);
   tft.init();
   tft.setRotation(0);
-  tft.invertDisplay(true); // Inverte as cores da tela conforme solicitado
+  tft.invertDisplay(false); // Inverte as cores da tela conforme solicitado
   tft.fillScreen(TFT_BLACK);
   // INICIA O TOUCH (DEPOIS DO TFT)
   touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
