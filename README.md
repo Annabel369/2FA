@@ -1,6 +1,6 @@
-#  Creeper Auth v7.2.3 - Dual Stack & Crypto Vault
+#  Creeper Auth v7.2.2 - Dual Stack & Crypto Vault
 
-Suport: https://www.youtube.com/watch?v=Y1EU-4kPpXc
+Support: https://www.youtube.com/watch?v=Y1EU-4kPpXc
 
 🟩 🟩 🟩 🟩 🟩 🟩 🟩 🟩  
 🟩 ⬛ ⬛ 🟩 🟩 ⬛ ⬛ 🟩  
@@ -14,7 +14,7 @@ Suport: https://www.youtube.com/watch?v=Y1EU-4kPpXc
 
 <img width="229" height="76" alt="image" src="https://github.com/user-attachments/assets/e4cbc7b1-96ca-43fa-ad09-fae37f71b348" />
 
-OBS: dependendo do Modelo pesquise no codigo inverter se tiver com a cor Branca ta invertida a cor no caso o meu esp32 true para a cor funcionar e do meu  Irmao e False modelo de fabricacao
+NOTE: Depending on your model, search the code to invert colors if your screen shows inverted colors (e.g. white background). In my case, true makes the color work, and for my brother's model, it's false depending on the manufacturing batch.
 
 <img width="1920" height="1074" alt="image" src="https://github.com/user-attachments/assets/0bf54103-3280-442c-8bf3-52341bc16ef5" />
 
@@ -22,35 +22,32 @@ OBS: dependendo do Modelo pesquise no codigo inverter se tiver com a cor Branca 
 
 ![WIN_20260106_03_42_48_Pro](https://github.com/user-attachments/assets/9bae5c3f-6ea4-4f8b-a3c6-ab38e6009a8d)
 
-    // --- CONFIGURAÇÕES DE CALIBRAÇÃO CIRÚRGICA DO TOUCH XPT2046 ---
-    const int TOUCH_MIN_RAW_X = 2350;// defalt 200 ou 300 folga 1000
-    const int TOUCH_MAX_RAW_X = 3650;// defalt 3700 ou 3000 ou 3250
+    // --- XPT2046 TOUCH SURGICAL CALIBRATION SETTINGS ---
+    const int TOUCH_MIN_RAW_X = 2350;// default 200 or 300, tolerance 1000
+    const int TOUCH_MAX_RAW_X = 3650;// default 3700 or 3000 or 3250
     const int TOUCH_MIN_RAW_Y = 200;
     const int TOUCH_MAX_RAW_Y = 3700;
-    const bool TOUCH_INVERT_X =
-    false; // Mude para true se o toque horizontal estiver espelhado
-    const bool TOUCH_INVERT_Y =
-    false; // Mude para true se o toque vertical estiver espelhado
-    const bool TOUCH_SWAP_XY =
-    false; // Mude para true se os eixos X e Y estiverem trocados
+    const bool TOUCH_INVERT_X = false; // Change to true if horizontal touch is mirrored
+    const bool TOUCH_INVERT_Y = false; // Change to true if vertical touch is mirrored
+    const bool TOUCH_SWAP_XY = false; // Change to true if X and Y axes are swapped
 
 <img width="1040" height="503" alt="image" src="https://github.com/user-attachments/assets/07b3348c-3310-44e3-be96-e2cc8f625813" />
 ESP32-2432S028R
 
 https://github.com/user-attachments/assets/b97c8798-70a3-4e39-a5d2-1c58f077c853
 
-# dependencie 
+# Dependencies
 https://github.com/Annabel369/ESP32FTPServer
 
 
-Arquivo de configuração para a biblioteca TFT_eSPI. Precisa ser colocado no diretório onde a biblioteca está instalada.
+Configuration file for the TFT_eSPI library. Must be placed in the directory where the library is installed.
 
 lv_conf.h
-Arquivo de configuração da biblioteca LVGL. Precisa ser colocado no diretório de bibliotecas do Arduino.
+Configuration file for the LVGL library. Must be placed in the Arduino libraries directory.
 
-Fonte: https://randomnerdtutorials.com/lvgl-cheap-yellow-display-esp32-2432s028r/
+Source: https://randomnerdtutorials.com/lvgl-cheap-yellow-display-esp32-2432s028r/
 
-DNS NAME IPV6 se nao  so pelo ipv4
+DNS NAME IPV6 if not, only via IPv4:
 
 http://IP/login.html
 
@@ -60,23 +57,23 @@ http://creeper.local/login.html
 
 <img width="1244" height="565" alt="image" src="https://github.com/user-attachments/assets/13e27c97-57c9-4a0f-b830-3d750f9c219d" />
 
-    // 6. Verificação de Dispositivos IPv6 Específicos (Mickey's Devices)
-    // Basta adicionar o IPv6 completo que aparece no Serial entre as aspas
-    if (clientIP == "fe80::seu_ipv6_pc_aqui" || 
-        clientIP == "fe80::seu_ipv6_celular_aqui" || 
-        clientIP == "fe80::seu_ipv6_tablet_aqui" || 
-        clientIP == "fe80::seu_ipv6_note_aqui") {
-      Serial.println("Acesso Liberado: Dispositivo IPv6 Reconhecido");
+    // 6. Specific IPv6 Devices Verification (Mickey's Devices)
+    // Simply add the full IPv6 that appears in the Serial monitor inside the quotes
+    if (clientIP == "fe80::your_pc_ipv6_here" || 
+        clientIP == "fe80::your_phone_ipv6_here" || 
+        clientIP == "fe80::your_tablet_ipv6_here" || 
+        clientIP == "fe80::your_laptop_ipv6_here") {
+      Serial.println("Access Granted: Recognized IPv6 Device");
       return true;
     }
 
 
 
 https://github.com/Annabel369/PanelMinecraft/blob/main/User_Setup.h
-#Copy the User_Setup.h file provided earlier and replace the existing file.
+# Copy the User_Setup.h file provided earlier and replace the existing file.
 <img width="786" height="675" alt="image" src="https://github.com/user-attachments/assets/77f1cb7a-b2fc-4b38-a4ad-369ca865f97d" />
 
-Procura algum projeto de impressoar 3d que simule o projeto original do creeper do Cinepolis 
+Look for a 3D printing project that simulates the original Cinepolis Creeper project
 
 <img width="1628" height="778" alt="image" src="https://github.com/user-attachments/assets/207e916e-f8be-487d-a34d-79fa48163d60" />
 
@@ -100,50 +97,50 @@ https://www.crealitycloud.com/pt/model-detail/minecraft-creeper-printing-model?s
 
 
 
-# 🟢 Creeper Auth v7.2.3 - Dual Stack & Crypto Vault
-O Creeper Auth v5.5 é um dispositivo de segurança de hardware baseado no ESP32. Ele combina um autenticador 2FA (TOTP) físico, um cofre de chaves mestras (Seeds) e um sistema de segurança de rede híbrido (IPv4/IPv6). Tudo isso com uma interface temática do Minecraft e gerenciamento total via SD Card e Web.
+# 🟢 Creeper Auth v7.2.2 - Dual Stack & Crypto Vault
+Creeper Auth v5.5 is an ESP32-based hardware security device. It combines a physical 2FA (TOTP) authenticator, a master key vault (Seeds), and a hybrid network security system (IPv4/IPv6). All of this comes with a Minecraft-themed interface and full management via SD Card and Web.
 
-# 🚀 Novidades da Versão v7.2.3
-Suporte Dual-Stack: Agora opera em IPv4 e IPv6 simultaneamente.
+# 🚀 New Features in v7.2.2
+Dual-Stack Support: Now operates on IPv4 and IPv6 simultaneously.
 
-Whitelist Dinâmica: Novo Agente Python que monitora sua rede e autoriza seu PC automaticamente.
+Dynamic Whitelist: New Python Agent that monitors your network and automatically authorizes your PC.
 
-Cofre de Seeds 3.0: Visualização de frases de recuperação (12/24 palavras) em 3 colunas numeradas no visor.
+Seeds Vault 3.0: Visualization of recovery phrases (12/24 words) in 3 numbered columns on the display.
 
-Gestão de Rede via Web: Altere Wi-Fi e IPs de segurança sem precisar mexer no código ou no SD.
+Web Network Management: Change Wi-Fi and security IPs without needing to modify the code or the SD card.
 
-Interface Colorida: Sistema de gerenciamento com botões coloridos para evitar exclusões acidentais.
+Colorful Interface: Management system with colorful buttons to prevent accidental deletions.
 
-# 💻 O Agente de Segurança (Python)
-Para que as funções de Adicionar, Editar e Excluir funcionem, você deve rodar o Agente Python no seu computador. Ele funciona como uma "chave digital" que avisa ao Creeper que você é o dono legítimo do dispositivo.
+# 💻 The Security Agent (Python)
+For the Add, Edit, and Delete functions to work, you must run the Python Agent on your computer. It acts as a "digital key" that tells the Creeper you are the legitimate owner of the device.
 
-# 🛠️ Pré-requisitos do Sistema
-Para o reconhecimento de rede funcionar, o Python precisa de acesso de baixo nível à placa de rede:
+# 🛠️ System Prerequisites
+For network recognition to work, Python needs low-level access to the network card:
 
-Instalar Npcap 1.85: * Baixe e instale o Npcap 1.85.
+Install Npcap 1.85: * Download and install Npcap 1.85.
 
-Importante: Durante a instalação, marque a opção "Install Npcap in WinPcap API-compatible Mode".
+Important: During installation, check the option "Install Npcap in WinPcap API-compatible Mode".
 
-Instalar Python 3.x: Certifique-se de que o Python está no seu PATH.
+Install Python 3.x: Make sure Python is in your PATH.
 
-Bibliotecas Python: O script usa bibliotecas nativas, mas para scanners avançados, você pode precisar:
+Python Libraries: The script uses native libraries, but for advanced scanners, you might need:
 
 Bash
 
 pip install scapy
-# 🛠️ Hardware Necessário
-ESP32 (30 pinos).
+# 🛠️ Required Hardware
+ESP32 (30 pins).
 
-Display TFT 2.4" (ILI9341 ou ST7789).
+2.4" TFT Display (ILI9341 or ST7789).
 
-Módulo Cartão Micro SD (SPI).
+Micro SD Card Module (SPI).
 
-Cartão Micro SD (Formatado em FAT32).
+Micro SD Card (Formatted in FAT32).
 
-# 📚 Bibliotecas do Arduino (IDE)
+# 📚 Arduino Libraries (IDE)
 
 
-ESP32FtpServer: Para acesso remoto aos arquivos. ele vem com todas Elas Juntas
+ESP32FtpServer: For remote file access. It comes with all of them together.
 
     ArduinoJson
     ESP32FtpServer
@@ -154,7 +151,7 @@ ESP32FtpServer: Para acesso remoto aos arquivos. ele vem com todas Elas Juntas
     TJpg_Decoder
     XPT2046_Touchscreen
 
-Regulagem customizado usando o ( nanu ) que eu desenvolvi e um editor de texto!
+Custom tuning using (nanu) that I developed and a text editor!
 
 
 https://github.com/Annabel369/wnano
@@ -163,51 +160,51 @@ https://github.com/Annabel369/wnano
 <img width="973" height="123" alt="image" src="https://github.com/user-attachments/assets/1b93315a-6d86-4f75-bfc9-715caf4bcf32" />
 
 <img width="1017" height="511" alt="image" src="https://github.com/user-attachments/assets/111e1644-220c-43ba-b1aa-5229c66f0e0f" />
-faz como na foto linha 27 coloca comentário // e na linha 28 coloca:
+Do as shown in the photo, put a comment // on line 27 and on line 28 put:
 
      #include "../ESP32FtpServer/src/User_Setup_Custom.h"
 
 
 
 
-# ⚙️ Configuração Inicial
-Insira o cartão SD no PC e crie um arquivo config.txt:
+# ⚙️ Initial Setup
+Insert the SD card into your PC and create a config.txt file:
 
 Plaintext
 
-SSID=SuaRedeWifi
-PASS=SuaSenha
+SSID=YourWiFiNetwork
+PASS=YourPassword
 MODO=REDE
 IP_ALVO=192.168.100.
-O Creeper iniciará e mostrará o IPv4 e o IPv6 na tela.
+The Creeper will boot and show its IPv4 and IPv6 on the screen.
 
 <img width="1504" height="575" alt="image" src="https://github.com/user-attachments/assets/85b3c213-bd00-45fe-8296-be44f813e2b7" />
 
 
-Execute o script agente_creeper.py no seu PC para liberar o acesso ao painel administrativo.
+Run the agente_creeper.py script on your PC to unlock access to the admin panel.
 
-# 📂 Estrutura de Arquivos no SD
-/config.txt: Armazena Wi-Fi e regras de IP.
+# 📂 SD File Structure
+/config.txt: Stores Wi-Fi and IP rules.
 
-/totp_secrets.txt: Armazena tokens (Nome=Secret=Senha).
+/totp_secrets.txt: Stores tokens (Name=Secret=Password).
 
-/seeds.txt: Armazena frases de recuperação (Nome|Palavras).
+/seeds.txt: Stores recovery phrases (Name|Words).
 
-# 🛡️ Segurança e Dicas
-Backup: O cartão SD é o único lugar onde seus dados moram. Faça cópias periódicas dos arquivos .txt.
+# 🛡️ Security and Tips
+Backup: The SD card is the only place your data lives. Make periodic backups of your .txt files.
 
-Acesso Negado: Se você vir esta mensagem na Web, certifique-se de que o Agente Python está rodando e que o IP do seu PC foi detectado por ele.
+Access Denied: If you see this message on the Web, make sure the Python Agent is running and your PC's IP was detected.
 
-Visualização de Seeds: No cofre, as palavras são numeradas de 1 a 24 e organizadas em 3 colunas no display para facilitar a digitação em carteiras como MetaMask ou Ledger.
+Viewing Seeds: In the vault, words are numbered from 1 to 24 and organized in 3 columns on the display to make typing them into wallets like MetaMask or Ledger easier.
 
 <img width="629" height="589" alt="image" src="https://github.com/user-attachments/assets/243d8eeb-8935-4c58-8e77-f56b20226d0e" />
-exemplo 192.168.100.38,192.168.100.190,aa80::aa94:32aa:e867:623
+Example: 192.168.100.38,192.168.100.190,aa80::aa94:32aa:e867:623
 
-ou tapar acesso a todos da intranet da casa ou empresa
+Or block access to everyone on the home or corporate intranet.
 
 <img width="391" height="466" alt="image" src="https://github.com/user-attachments/assets/8397a82f-05fd-4969-8b73-1cd4b8710e93" />
 
-# FTP Acesso voce consegue guardar coisas e apaga e tira (mas nao tem acesso aos arquivos Originais gerado pelo sistema
+# FTP Access: You can store things, delete and take out (but you don't have access to the Original files generated by the system)
 
 
 
@@ -218,49 +215,49 @@ ftp://creeper:1234@192.168.100.49/
 
 
 
-# 📄 Licença
-Projeto desenvolvido para uso pessoal e entusiastas de segurança e Minecraft. Use com responsabilidade e mantenha seus backups em dia!
+# 📄 License
+Project developed for personal use and for security and Minecraft enthusiasts. Use responsibly and keep your backups up to date!
 
 <img width="1109" height="970" alt="image" src="https://github.com/user-attachments/assets/80c89aca-2570-4485-b574-4aa815d71cb5" />
-# 🟩 Creeper Auth v7.2.3 - Cofre Físico com YubiKey
+# 🟩 Creeper Auth v7.2.2 - Physical Vault with YubiKey
 
-Este projeto transforma um módulo ESP32 com tela touch (CYD - *Cheap Yellow Display*) em um **Autenticador 2FA físico** inspirado no Creeper (Minecraft). O sistema exige um toque físico em uma **YubiKey** para validar o acesso, abrindo mecanicamente a cabeça do Creeper através de um Servo Motor e acendendo uma luz interna via Relé.
-
----
-
-## 🛠️ Hardware Utilizado
-
-*   **Placa:** ESP32-2432S028R (conhecida como CYD - Cheap Yellow Display).
-*   **Mecânica:** Servo Motor (ex: SG90 ou MG90S) atuando como braço mecânico para abrir a cabeça.
-*   **Iluminação:** Módulo Relé acionando uma lâmpada/abajur.
-*   **Segurança:** YubiKey (configurada com slot de *Challenge-Response*).
+This project transforms an ESP32 module with a touch screen (CYD - *Cheap Yellow Display*) into a **Physical 2FA Authenticator** inspired by the Creeper (Minecraft). The system requires a physical touch on a **YubiKey** to validate access, mechanically opening the Creeper's head through a Servo Motor and turning on an internal light via a Relay.
 
 ---
 
-## ⚠️ Dicas Cruciais de Hardware (Para a placa CYD)
+## 🛠️ Hardware Used
 
-A placa **ESP32-2432S028R** possui muitos componentes internos (tela, SD, touch, áudio) que ocupam a maioria dos pinos nativos do ESP32. Para evitar queima de componentes ou conflitos (como tela branca ou som chiando), siga estas regras rígidas:
-
-### 1. Pinagem Segura (Conector Traseiro P3)
-Nunca use o pino `26` nesta placa para hardware externo, pois ele é permanentemente ligado ao DAC (áudio). 
-Na parte traseira da placa, localize o conector branco de 4 pinos (geralmente rotulado como **P3**). Ele expõe dois pinos perfeitamente seguros para uso:
-*   **GPIO 22:** Usado para o sinal do Módulo Relé (Luz).
-*   **GPIO 27:** Usado para o sinal PWM do Servo Motor.
-
-### 2. Alimentação de Energia (O "Pulo do Gato")
-O conector **P3** fornece apenas **3.3V**. Se você ligar o Servo Motor ou o Relé diretamente no `VCC` do P3, eles vão "tremer", travar ou reiniciar o ESP32 por falta de corrente elétrica.
-*   **Sinal (Dados):** Ligue os fios Amarelo/Laranja (sinal) do Servo e do Relé nos pinos **22 e 27** do P3.
-*   **Energia (5V):** Puxe os fios Vermelho (VCC) e Preto (GND) do seu Servo/Relé diretamente do conector **P1** (perto da porta USB), que fornece **5V nativos**, ou solde diretamente no pino `VBUS` da entrada USB. 
+*   **Board:** ESP32-2432S028R (known as CYD - Cheap Yellow Display).
+*   **Mechanics:** Servo Motor (e.g. SG90 or MG90S) acting as a mechanical arm to open the head.
+*   **Lighting:** Relay Module triggering a lamp.
+*   **Security:** YubiKey (configured with a Challenge-Response slot).
 
 ---
 
-## 💻 Dependências de Software
+## ⚠️ Crucial Hardware Tips (For the CYD board)
 
-Para o Servo Motor funcionar na arquitetura ESP32 sem dar erro de compilação (conflito de *timers* `LEDC_MAX_BIT_WIDTH`), **NÃO utilize a biblioteca padrão `Servo.h` do Arduino.**
+The **ESP32-2432S028R** board has many internal components (screen, SD, touch, audio) that occupy most of the native ESP32 pins. To avoid burning components or causing conflicts (like a white screen or audio static), follow these strict rules:
 
-1. Vá no **Gerenciador de Bibliotecas** da IDE do Arduino.
-2. Busque e instale a biblioteca: **`ESP32Servo`** (por Kevin Harrington, John K. Bennett).
-3. No código, a configuração inicial deve ser feita assim:
+### 1. Safe Pinout (Rear Connector P3)
+Never use pin `26` on this board for external hardware, as it is permanently connected to the DAC (audio). 
+On the back of the board, locate the white 4-pin connector (usually labeled **P3**). It exposes two perfectly safe pins to use:
+*   **GPIO 22:** Used for the Relay Module signal (Light).
+*   **GPIO 27:** Used for the PWM signal of the Servo Motor.
+
+### 2. Power Supply (The "Catch")
+The **P3** connector only provides **3.3V**. If you connect the Servo Motor or Relay directly to the `VCC` of P3, they will "jitter", freeze, or reset the ESP32 due to lack of electrical current.
+*   **Signal (Data):** Connect the Yellow/Orange wires (signal) of the Servo and Relay to pins **22 and 27** of P3.
+*   **Power (5V):** Pull the Red (VCC) and Black (GND) wires from your Servo/Relay directly from the **P1** connector (near the USB port), which provides native **5V**, or solder directly to the `VBUS` pin of the USB input. 
+
+---
+
+## 💻 Software Dependencies
+
+For the Servo Motor to work on the ESP32 architecture without a compilation error (`LEDC_MAX_BIT_WIDTH` timer conflict), **DO NOT use the standard Arduino `Servo.h` library.**
+
+1. Go to the **Library Manager** in the Arduino IDE.
+2. Search and install the library: **`ESP32Servo`** (by Kevin Harrington, John K. Bennett).
+3. In the code, the initial setup should be done like this:
 
 ```cpp
 #include <ESP32Servo.h> 
@@ -284,77 +281,79 @@ void setup() {
 
 ---
 
-## 🔒 Como Funciona a Automação YubiKey
+## 🔒 How the YubiKey Automation Works
 
-O sistema não abre a porta com um simples comando web aberto. Ele exige uma senha combinada validada fisicamente pelo hardware.
+The system does not open the door with a simple open web command. It requires a combined password physically validated by hardware.
 
-1. **Espera de Toque:** Um script em Python (`testa_yubikey_ykman.py`) roda no PC local e "trava" aguardando o toque capacitivo na YubiKey física.
-2. **Disparo da Requisição:** Após validar o desafio localmente, o PC dispara um comando HTTP GET silencioso para o ESP32 passando a credencial secreta:
+1. **Waiting for Touch:** A Python script (`testa_yubikey_ykman.py`) runs on the local PC and "locks" waiting for the capacitive touch on the physical YubiKey.
+2. **Triggering the Request:** After validating the challenge locally, the PC triggers a silent HTTP GET command to the ESP32 passing the secret credential:
    ```http
-   GET http://<IP_DO_CREEPER>/aprovado?senha=SuaSenhaAqui
+   GET http://<CREEPER_IP>/aprovado?senha=YourPasswordHere
    ```
-3. **Ação do ESP32:** O ESP32 recebe a requisição e valida a senha. Se estiver correta:
-   * 🖼️ Carrega a imagem do SD Card e exibe a mensagem de sucesso na tela.
-   * 💡 Aciona o Relé (GPIO 22) para acender a luz interna.
-   * ⚙️ Gira o Servo Motor (GPIO 27) para 90 graus, abrindo a cabeça mecanicamente.
-4. **Fechamento Automático:** O loop principal do ESP32 monitora o tempo. Exatamente **30 segundos** após a abertura, ele corta a energia do Relé, retorna o Servo para 0 graus e volta o display para o rosto padrão do Creeper.
-
-5. # 🛒 Guia de Peças e Hardware (Mecânica e Automação)
-
-Abaixo está a lista completa dos componentes físicos necessários para montar a mecânica do Creeper (abertura da cabeça, iluminação) e a automação da porta secreta.
+3. **ESP32 Action:** The ESP32 receives the request and validates the password. If correct:
+   * 🖼️ Loads the image from the SD Card and displays the success message on the screen.
+   * 💡 Activates the Relay (GPIO 22) to turn on the internal light.
+   * ⚙️ Turns the Servo Motor (GPIO 27) to 90 degrees, mechanically opening the head.
+4. **Automatic Closing:** The main loop of the ESP32 monitors the time. Exactly **30 seconds** after opening, it cuts the power to the Relay, returns the Servo to 0 degrees, and returns the display to the standard Creeper face.
 
 ---
 
-Antes de comeca este projeto eu recomendo um Distribuidor de 12v para 5v e 3.3v no mesmo GND para ligas as pecas de outras voltagem sem sai do GND de comunicacao
+## 🛒 Parts and Hardware Guide (Mechanics and Automation)
 
-Conversor Buck DC-DC 12V para 3.3V 5V 12V Saída Tripla 800mA Fonte de alimentação de alta eficiência para Arduino ESP8266 ESP32 Breadboard
+Below is the complete list of physical components needed to assemble the Creeper mechanics (head opening, lighting) and the secret door automation.
+
+---
+
+Before starting this project, I recommend a 12V to 5V and 3.3V Distributor on the same GND to connect parts with different voltages without leaving the communication GND.
+
+Buck Converter DC-DC 12V to 3.3V 5V 12V Triple Output 800mA High efficiency power supply for Arduino ESP8266 ESP32 Breadboard
 
 <img width="1587" height="699" alt="image" src="https://github.com/user-attachments/assets/2198e241-821e-4f80-b3ca-3277d7886401" />
 
-também acho importante um kit de fios deste já que só vem  1 fio que pode dar defeito 
+I also think a wire kit like this is important since it only comes with 1 wire that can be defective.
 
-5 pçs/lote JST 1.25mm para DuPont 2. Conexão de cabo 54mm-1P/fio terminal longo 10/20/30cm Fio DuPont 2p 3p 4p 5p-12p
+5 pcs/lot JST 1.25mm to DuPont 2. 54mm-1P cable connection/long terminal wire 10/20/30cm DuPont wire 2p 3p 4p 5p-12p
 
 
 <img width="1382" height="443" alt="image" src="https://github.com/user-attachments/assets/073f3713-da71-4e00-82d8-2793353429e1" />
 
-ou de fios 
+or wires
 
-5 pçs/lote JST 1.25mm para DuPont 2. Conexão de cabo 54mm-1P/fio terminal longo 10/20/30cm Fio DuPont 2p 3p 4p 5p-12p
+5 pcs/lot JST 1.25mm to DuPont 2. 54mm-1P cable connection/long terminal wire 10/20/30cm DuPont wire 2p 3p 4p 5p-12p
 
 <img width="1596" height="586" alt="image" src="https://github.com/user-attachments/assets/a1a53d34-9dc8-45d7-92d0-0f4b67992f95" />
 
 
 
 
-## 1. Módulo Relé (Para a Luz e a Trava)
+## 1. Relay Module (For the Light and Lock)
 
 <img width="1596" height="586" alt="image" src="https://github.com/user-attachments/assets/38970eb4-7f46-44e0-8ad2-b5a7c6f03650" />
 
-Para conectar diretamente no pino da placa CYD (ESP32), o ideal é usar um relé que funcione bem com sinais lógicos de **3.3V**.
+To connect directly to the CYD (ESP32) board pin, the ideal is to use a relay that works well with **3.3V** logic signals.
 
-*   **O que buscar nas lojas:** `Módulo Relé 1 Canal 3.3V Optoacoplado` ou `Módulo Relé 3V Arduino`.
+*   **What to look for in stores:** `1 Channel 3.3V Optocoupled Relay Module` or `3V Arduino Relay Module`.
 
-> 💡 **Dica:** Módulos de relé de 5V com "Optoacoplador" geralmente também funcionam se você ligar os 5V no pino `VCC` e o sinal de 3.3V (do ESP32) no pino `IN`. Porém, optar pelo módulo de 3.3V nativo é mais seguro e evita problemas de tensão.
+> 💡 **Tip:** 5V relay modules with "Optocoupler" usually also work if you connect the 5V to the `VCC` pin and the 3.3V signal (from the ESP32) to the `IN` pin. However, opting for the native 3.3V module is safer and avoids voltage problems.
 
 ---
 
-## 2. O Motor (Braço Mecânico)
+## 2. The Motor (Mechanical Arm)
 
 <img width="1596" height="586" alt="image" src="https://github.com/user-attachments/assets/d8f96498-f808-473f-a319-89f6cef088d4" />
 
-Para levantar a cabeça do Creeper ou abrir a porta, você não precisará de um braço robótico inteiro. Apenas um Servo Motor forte e uma haste metálica já resolvem o problema de forma limpa e escondida.
+To lift the Creeper's head or open the door, you won't need a whole robotic arm. Just a strong Servo Motor and a metal rod will solve the problem cleanly and hidden.
 
-*   **O Motor:** Busque por `Micro Servo MG90S`. 
-    *   *Nota:* A sigla "MG" significa *Metal Gear* (engrenagens de metal). **Não compre** o modelo SG90 azul (de plástico), pois suas engrenagens podem espanar ou quebrar com o peso contínuo da cabeça do Creeper.
-*   **A Haste (O "braço"):** Busque por `Tirante para aeromodelo` ou `Pushrod RC`. É um arame fino e resistente de aço com um terminal (*Linkage Stopper*) que se prende na hélice do servo motor e empurra/puxa a tampa do Creeper.
+*   **The Motor:** Search for `Micro Servo MG90S`. 
+    *   *Note:* The acronym "MG" means *Metal Gear*. **Do not buy** the blue SG90 model (plastic), as its gears can strip or break with the continuous weight of the Creeper's head.
+*   **The Rod (The "arm"):** Search for `RC Airplane Pushrod`. It is a thin, strong steel wire with a terminal (*Linkage Stopper*) that attaches to the servo motor horn and pushes/pulls the Creeper lid.
 
 ---
 
-## 3. Trava de Porta (Fechadura Secreta)
-Para automatizar a porta secreta do quarto com segurança e estética embutida, a melhor opção são as travas tipo solenoide.
+## 3. Door Lock (Secret Lock)
+To automate the secret bedroom door with built-in security and aesthetics, the best option are solenoid type locks.
 
-*   **O que buscar nas lojas:** `Mini Trava Eletromagnética Solenoide 12V` ou `Fechadura Solenoide Lingueta 12V`.
+*   **What to look for in stores:** `12V Solenoid Electromagnetic Mini Lock` or `12V Solenoid Tongue Lock`.
 
 *   
 <img width="1596" height="586" alt="image" src="https://github.com/user-attachments/assets/b05e09eb-5d9d-40a7-8c3c-64f326f80edd" />
@@ -362,14 +361,14 @@ Para automatizar a porta secreta do quarto com segurança e estética embutida, 
 
 
 
-> ⚡ **Aviso de Energia:** Estas travas puxam muita corrente (Amperes) e operam em **12 Volts**. O seu ESP32 NÃO consegue alimentá-las diretamente. Será necessário o uso de uma fonte de energia 12V externa ligada à tomada. O Módulo Relé atuará apenas como o "interruptor" para liberar essa energia.
+> ⚡ **Power Warning:** These locks draw a lot of current (Amperes) and operate at **12 Volts**. Your ESP32 CANNOT power them directly. You will need to use an external 12V power supply plugged into the wall. The Relay Module will only act as the "switch" to release this power.
 
-### 🔌 Diagrama de Ligação (Trava Solenoide)
+### 🔌 Wiring Diagram (Solenoid Lock)
 
-1. **Fonte 12V:** Ligada à tomada da parede.
-2. **Caminho do Positivo:** O fio positivo (+12V) da fonte entra no Relé pelo borne **`COM`** (Comum) e sai pelo borne **`NO`** (Normally Open / Normalmente Aberto), indo até o fio positivo da trava solenoide.
-3. **Caminho do Negativo:** O fio negativo (GND) da trava liga diretamente no fio negativo da fonte 12V.
+1. **12V Power Supply:** Plugged into the wall outlet.
+2. **Positive Path:** The positive wire (+12V) from the power supply enters the Relay through the **`COM`** (Common) terminal and exits through the **`NO`** (Normally Open) terminal, going to the positive wire of the solenoid lock.
+3. **Negative Path:** The negative wire (GND) of the lock connects directly to the negative wire of the 12V power supply.
 
-🎯 **Ação Final:** Quando a YubiKey for tocada e validada, o ESP32 abrirá a cabeça do Creeper e ativará o Relé. O circuito do relé se fecha, permitindo a passagem dos 12V que puxarão a lingueta metálica da trava, destrancando a porta secreta instantaneamente!
+🎯 **Final Action:** When the YubiKey is touched and validated, the ESP32 will open the Creeper's head and activate the Relay. The relay circuit closes, allowing the 12V to pass, pulling the metal tongue of the lock, unlocking the secret door instantly!
 
 FPS OPTION https://github.com/Annabel369/FPSNVIA/tree/main
