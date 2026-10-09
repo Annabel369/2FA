@@ -12,7 +12,7 @@ void setup() {
   // LANG_EN_US = Inglês / English
   // LANG_PT_BR = Português / Portuguese
   
-  GlobalLanguage = LANG_EN_US; // Ativação em Inglês
+  GlobalLanguage = LANG_PT_BR; // Ativação em Inglês
   //GlobalLanguage = LANG_PT_BR; // Ativação em Português
 
 

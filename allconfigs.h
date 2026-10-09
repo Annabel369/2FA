@@ -106,8 +106,8 @@ bool sessaoAtiva = false; // Controle de sessão customizado
 // --- DECLARAÇÕES E FUNÇÕES DE CARREGAMENTO (LOADING SCREEN) ---
 
 // --- CONFIGURAÇÕES DE CALIBRAÇÃO CIRÚRGICA DO TOUCH XPT2046 ---
-const int TOUCH_MIN_RAW_X = 2350;// defalt 200 ou 300 folga 1000
-const int TOUCH_MAX_RAW_X = 3650;// defalt 3700 ou 3000 ou 3250
+const int TOUCH_MIN_RAW_X = 2350; // defalt 200 ou 300 folga 1000
+const int TOUCH_MAX_RAW_X = 3650; // defalt 3700 ou 3000 ou 3250
 const int TOUCH_MIN_RAW_Y = 200;
 const int TOUCH_MAX_RAW_Y = 3700;
 const bool TOUCH_INVERT_X =
