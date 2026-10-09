@@ -64,12 +64,9 @@ String cfgSSID = "Maria Cristina 4G";
 String cfgPASS = "1247bfam";
 String cfgMODO = "REDE";
 String cfgIP = "192.168.100.";
-String cfgPIX = "810924f7-69b3-4116-8d8f-692e4a25c251"; // Pode ser CPF, E-mail
-                                                        // ou Chave Aleatória
+String cfgPIX = "810924f7-69b3-4116-8d8f-692e4a25c251"; // Pode ser CPF, E-mail ou Chave Aleatória
 String cfgWiser =
-    "wise.com/pay/me/amauribuenodossantoss"; // Wiser banco de coversao de
-                                             // Moedas seu
-                                             // wise.com/pay/me/amauribuenodossantoss
+    "wise.com/pay/me/amauribuenodossantoss"; // Wiser banco de conversao de Moedas
 String dynamicWhitelist = "";
 String weatherApiKey =
     "fff7ce772990b49a7efd6b1a6827c687"; // https://home.openweathermap.org/api_keys
@@ -100,7 +97,7 @@ const int PIN_BLUE = 17;
 std::vector<TotpAccount> accounts;
 std::vector<SeedRecord> seeds;
 // Variáveis Globais
-int displayMode = 1; // Começa no rosto do Creeper
+int displayMode = 1; // Começa no rosto do Creeper ou modo selecionado
 int currentIndex = -1;
 int currentSeedIndex = -1;
 int lastSec = -1;
@@ -109,8 +106,8 @@ bool sessaoAtiva = false; // Controle de sessão customizado
 // --- DECLARAÇÕES E FUNÇÕES DE CARREGAMENTO (LOADING SCREEN) ---
 
 // --- CONFIGURAÇÕES DE CALIBRAÇÃO CIRÚRGICA DO TOUCH XPT2046 ---
-const int TOUCH_MIN_RAW_X = 200;
-const int TOUCH_MAX_RAW_X = 3700;
+const int TOUCH_MIN_RAW_X = 2350;// defalt 200 ou 300 folga 1000
+const int TOUCH_MAX_RAW_X = 3650;// defalt 3700 ou 3000 ou 3250
 const int TOUCH_MIN_RAW_Y = 200;
 const int TOUCH_MAX_RAW_Y = 3700;
 const bool TOUCH_INVERT_X =
@@ -137,5 +134,4 @@ bool updateDisponivel = false;
 WiFiClientSecure client;
 WeatherData weather;
 bool tlsAtivado = false;
-
 #endif // ALLCONFIGS_H

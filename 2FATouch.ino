@@ -4,6 +4,18 @@
 
 void setup() {
   Serial.begin(115200);
+  
+  // ==========================================
+  // IDIOMA GLOBAL / GLOBAL LANGUAGE
+  // ==========================================
+  // Descomente a linha do idioma desejado:
+  // LANG_EN_US = Inglês / English
+  // LANG_PT_BR = Português / Portuguese
+  
+  GlobalLanguage = LANG_EN_US; // Ativação em Inglês
+  //GlobalLanguage = LANG_PT_BR; // Ativação em Português
+
+
   // Configura o pino de Backlight como saída
   pinMode(TFT_BL, OUTPUT);
   // Configura os pinos como saída
@@ -51,7 +63,7 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED && millis() - start < 10000)
     delay(500);
   // --- PRINT NO CONSOLE (Monitor Serial) ---
-  Serial.println("\n--- REDE CONECTADA ---");
+  Serial.println(tr("\n--- REDE CONECTADA ---", "\n--- NETWORK CONNECTED ---"));
   Serial.print("IPv4: ");
   Serial.println(WiFi.localIP());
   // No Core 3.x, usamos linkLocalIPv6() para o endereço fe80::
@@ -344,18 +356,17 @@ void setup() {
         WiFi.localIP().toString() +
         "/favicon.ico'>><head><meta charset='UTF-8'><meta name='viewport' "
         "content='width=device-width, initial-scale=1.0'>" +
-        css + "</head><body><div class='box'><h2>GERENCIAR TOKENS</h2>";
+        css + "</head><body><div class='box'><h2>" + tr("GERENCIAR TOKENS", "MANAGE TOKENS") + "</h2>";
     for (int i = 0; i < accounts.size(); i++) {
       h += "<div style='margin-bottom:10px;'>" + accounts[i].name + " <br>";
-      h += "<a href='/edit?id=" + String(i) + "' class='edit'>[E] EDITAR</a> ";
+      h += "<a href='/edit?id=" + String(i) + "' class='edit'>[E] " + tr("EDITAR", "EDIT") + "</a> ";
       h += "<a href='/del?id=" + String(i) +
-           "' class='del'>[X] EXCLUIR</a></div>";
+           "' class='del'>[X] " + tr("EXCLUIR", "DELETE") + "</a></div>";
     }
-    h += "<hr><a href='/add'>+ NOVO TOKEN</a><br>"
-         "<a href='/'>VOLTAR</a></div>"
-         "<footer>Copyright 2025-2026 Criado por Amauri Bueno dos Santos com "
-         "apoio da Gemini. "
-         "<a href='https://github.com/Annabel369/2FATouch' target='_blank' "
+    h += "<hr><a href='/add'>+ " + tr("NOVO TOKEN", "NEW TOKEN") + "</a><br>"
+         "<a href='/'>" + tr("VOLTAR", "BACK") + "</a></div>"
+         "<footer>Copyright 2025-2026 " + tr("Criado por Amauri Bueno dos Santos com apoio da Gemini.", "Created by Amauri Bueno dos Santos with support from Gemini.") + 
+         " <a href='https://github.com/Annabel369/2FATouch' target='_blank' "
          "style='color:#bb86fc;'>GitHub</a></footer>"
          "</body></html>";
     server.send(200, "text/html", h);
