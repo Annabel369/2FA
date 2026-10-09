@@ -1,4 +1,4 @@
-#  Creeper Auth v7.2.2 - Dual Stack & Crypto Vault
+#  Creeper Auth v7.2.3 - Dual Stack & Crypto Vault
 
 Suport: https://www.youtube.com/watch?v=Y1EU-4kPpXc
 
@@ -100,10 +100,10 @@ https://www.crealitycloud.com/pt/model-detail/minecraft-creeper-printing-model?s
 
 
 
-# 🟢 Creeper Auth v7.2.2 - Dual Stack & Crypto Vault
+# 🟢 Creeper Auth v7.2.3 - Dual Stack & Crypto Vault
 O Creeper Auth v5.5 é um dispositivo de segurança de hardware baseado no ESP32. Ele combina um autenticador 2FA (TOTP) físico, um cofre de chaves mestras (Seeds) e um sistema de segurança de rede híbrido (IPv4/IPv6). Tudo isso com uma interface temática do Minecraft e gerenciamento total via SD Card e Web.
 
-# 🚀 Novidades da Versão v7.2.2
+# 🚀 Novidades da Versão v7.2.3
 Suporte Dual-Stack: Agora opera em IPv4 e IPv6 simultaneamente.
 
 Whitelist Dinâmica: Novo Agente Python que monitora sua rede e autoriza seu PC automaticamente.
@@ -222,7 +222,7 @@ ftp://creeper:1234@192.168.100.49/
 Projeto desenvolvido para uso pessoal e entusiastas de segurança e Minecraft. Use com responsabilidade e mantenha seus backups em dia!
 
 <img width="1109" height="970" alt="image" src="https://github.com/user-attachments/assets/80c89aca-2570-4485-b574-4aa815d71cb5" />
-# 🟩 Creeper Auth v7.2.2 - Cofre Físico com YubiKey
+# 🟩 Creeper Auth v7.2.3 - Cofre Físico com YubiKey
 
 Este projeto transforma um módulo ESP32 com tela touch (CYD - *Cheap Yellow Display*) em um **Autenticador 2FA físico** inspirado no Creeper (Minecraft). O sistema exige um toque físico em uma **YubiKey** para validar o acesso, abrindo mecanicamente a cabeça do Creeper através de um Servo Motor e acendendo uma luz interna via Relé.
 
