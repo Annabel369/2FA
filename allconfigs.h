@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ALLCONFIGS_H
+#define ALLCONFIGS_H
 #include <Arduino.h>
 
 // ====================================================================
@@ -8,7 +10,7 @@
 // FINAL)
 // =====
 #include "mbedtls/md.h"
-#include "qrcode.h"
+#include <qrcode.h>
 #include <ArduinoJson.h> 
 #include <ESP32FtpServer.h> // Você precisará instalar a biblioteca ESP32FtpServer ela vem com tudo
 #include <ESPmDNS.h>
@@ -136,3 +138,4 @@ WiFiClientSecure client;
 WeatherData weather;
 bool tlsAtivado = false;
 
+#endif // ALLCONFIGS_H
