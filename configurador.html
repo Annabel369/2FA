@@ -741,7 +741,7 @@
     const versao = document.getElementById('versaoAtual').value || "2.2";
     const urlVer = document.getElementById('urlVersaoGitHub').value;
 
-    return `#pragma once
+return `#pragma once
 #ifndef ALLCONFIGS_H
 #define ALLCONFIGS_H
 #include <Arduino.h>
@@ -849,8 +849,8 @@ bool sessaoAtiva = false; // Controle de sessão customizado
 // --- DECLARAÇÕES E FUNÇÕES DE CARREGAMENTO (LOADING SCREEN) ---
 
 // --- CONFIGURAÇÕES DE CALIBRAÇÃO CIRÚRGICA DO TOUCH XPT2046 ---
-const int TOUCH_MIN_RAW_X = ${rawMinX};// defalt 200 ou 300 folga 1000
-const int TOUCH_MAX_RAW_X = ${rawMaxX};// defalt 3700 ou 3000 ou 3250
+const int TOUCH_MIN_RAW_X = ${rawMinX}; // defalt 200 ou 300 folga 1000
+const int TOUCH_MAX_RAW_X = ${rawMaxX}; // defalt 3700 ou 3000 ou 3250
 const int TOUCH_MIN_RAW_Y = ${rawMinY};
 const int TOUCH_MAX_RAW_Y = ${rawMaxY};
 const bool TOUCH_INVERT_X =
@@ -877,8 +877,7 @@ bool updateDisponivel = false;
 WiFiClientSecure client;
 WeatherData weather;
 bool tlsAtivado = false;
-#endif // ALLCONFIGS_H
-`;
+#endif // ALLCONFIGS_H`;
   }
 
   // Atualiza o painel de código em tempo real
