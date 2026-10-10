@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reprodutor de Mídia ESP32</title>
+    <title data-i18n="v.title">Reprodutor de Mídia ESP32</title>
+    <script src="/i18n.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -159,7 +160,6 @@
             background-color: #9965f4;
         }
 
-        /* --- OVERLAY E BARRA DE PROGRESSO RETRO --- */
         .progress-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -235,51 +235,52 @@
 <body>
 
     <div class="header-bar">
-        <h1>Reprodutor de Mídia SD</h1>
+        <h1 data-i18n="v.header">Reprodutor de Mídia SD</h1>
         <div class="nav-buttons">
-            <button class="btn-nav btn-home" id="btn-back">⬅ Voltar (Home)</button>
-            <button class="btn-nav btn-logout" id="btn-logout">🚪 Sair</button>
+            <button class="btn-nav btn-home" id="btn-back" data-i18n="v.back">⬅ Voltar (Home)</button>
+            <button class="btn-nav btn-logout" id="btn-logout" data-i18n="v.logout">🚪 Sair</button>
         </div>
     </div>
     
     <div class="container">
-        <!-- Lista de Mídias e Upload -->
         <div class="video-list-container">
             <div class="upload-section">
-                <label for="file-input" class="upload-btn">➕ Enviar Arquivo para SD</label>
+                <label for="file-input" class="upload-btn" data-i18n="v.upload">➕ Enviar Arquivo para SD</label>
                 <input type="file" id="file-input" accept=".mp4,.mkv,.mp3,.m4a,.webm,.avi">
             </div>
 
-            <h3 style="margin-top: 0;">Arquivos no Cartão SD</h3>
-            <div id="video-list">Carregando mídias...</div>
+            <h3 style="margin-top: 0;" data-i18n="v.files">Arquivos no Cartão SD</h3>
+            <div id="video-list" data-i18n="v.load">Carregando mídias...</div>
         </div>
         
-        <!-- Player de Vídeo com Barra Retro -->
         <div class="video-player-container">
-            <!-- Tela de Carregamento Estilo Retro -->
             <div id="loading-overlay" class="progress-overlay" style="display: none;">
                 <div class="progress-box">
                     <div class="progress-header">
-                        <span id="loader-title">Loading...</span>
+                        <span id="loader-title" data-i18n="v.loading">Loading...</span>
                         <span id="loader-percent">0%</span>
                     </div>
                     <div class="progress-bar-container">
                         <div id="loader-bar" class="progress-bar-fill"></div>
                     </div>
-                    <div class="progress-footer">PLEASE WAIT...</div>
+                    <div class="progress-footer" data-i18n="v.pwait">PLEASE WAIT...</div>
                 </div>
             </div>
 
             <video id="player" controls preload="metadata">
-                Seu navegador não suporta a tag de vídeo.
+                <span data-i18n="v.notag">Seu navegador não suporta a tag de vídeo.</span>
             </video>
-            <h3 id="current-video-title" style="margin-top: 15px; color: #03dac6; text-align: center;">Nenhum vídeo selecionado</h3>
-            <button class="btn" id="fullscreen-btn">Alternar Tela Cheia</button>
+            <h3 id="current-video-title" style="margin-top: 15px; color: #03dac6; text-align: center;" data-i18n="v.novideo">Nenhum vídeo selecionado</h3>
+            <button class="btn" id="fullscreen-btn" data-i18n="v.full">Alternar Tela Cheia</button>
         </div>
     </div>
 
     <script>
+        window.applyCustomI18N = function(tr, lang) {
+            window._tr = tr;
+        };
         document.addEventListener('DOMContentLoaded', () => {
+            const tr = window._tr || function(k){return k;};
             const videoListEl = document.getElementById('video-list');
             const player = document.getElementById('player');
             const currentVideoTitle = document.getElementById('current-video-title');
@@ -288,7 +289,6 @@
             const btnBack = document.getElementById('btn-back');
             const btnLogout = document.getElementById('btn-logout');
 
-            // Elementos da Barra Retro
             const overlay = document.getElementById('loading-overlay');
             const loaderTitle = document.getElementById('loader-title');
             const loaderPercent = document.getElementById('loader-percent');
@@ -296,8 +296,8 @@
 
             const mediaExtensions = ['.mkv', '.mp4', '.m4a', '.mp3', '.avi', '.webm', '.ogg'];
 
-            function showLoader(title = "Loading...") {
-                loaderTitle.textContent = title;
+            function showLoader(titleKey) {
+                loaderTitle.textContent = titleKey ? tr(titleKey) : tr('v.loading');
                 loaderPercent.textContent = "0%";
                 loaderBar.style.width = "0%";
                 overlay.style.display = 'flex';
@@ -313,9 +313,8 @@
                 overlay.style.display = 'none';
             }
 
-            // --- NAVEGAÇÃO / AÇÕES DE BOTÃO ---
             btnBack.addEventListener('click', () => {
-                showLoader("Voltando à Home...");
+                showLoader('v.backhome');
                 updateLoader(40);
                 setTimeout(() => {
                     window.location.href = '/';
@@ -323,31 +322,23 @@
             });
 
             btnLogout.addEventListener('click', () => {
-                if (confirm("Deseja realmente encerrar a sessão?")) {
-                    showLoader("Encerrando sessão...");
+                if (confirm(tr('v.lgconfirm'))) {
+                    showLoader('v.lgdoing');
                     updateLoader(70);
                     window.location.href = '/logout';
                 }
             });
 
-            // --- BUSCA LISTA DO SD ---
             function loadFileList() {
-                showLoader("Carregando Mídias...");
+                showLoader('v.loadm');
                 updateLoader(15);
 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
 
                 fetch('/json', { signal: controller.signal })
                     .then(response => {
                         clearTimeout(timeoutId);
-                        if (response.status === 401) {
-                            window.location.href = '/login.html';
-                            throw new Error('Sessão expirada. Redirecionando para login...');
-                        }
-                        if (!response.ok) {
-                            throw new Error('Falha HTTP: ' + response.status);
-                        }
                         updateLoader(60);
                         return response.json();
                     })
@@ -356,13 +347,13 @@
                         videoListEl.innerHTML = '';
                         
                         const mediaFiles = data.filter(item => {
-                            if (item.type === 'dir' || item.isDir) return false;
-                            const name = (item.name || '').toLowerCase();
+                            if (item.type === 'dir') return false;
+                            const name = item.name.toLowerCase();
                             return mediaExtensions.some(ext => name.endsWith(ext));
                         });
 
                         if (mediaFiles.length === 0) {
-                            videoListEl.innerHTML = '<p style="color:#aaa;">Nenhum arquivo de mídia encontrado no SD.</p>';
+                            videoListEl.innerHTML = '<p style="color:#aaa;">' + tr('v.nomedia') + '</p>';
                             hideLoader();
                             return;
                         }
@@ -387,23 +378,19 @@
                     .catch(err => {
                         hideLoader();
                         if (err.name === 'AbortError') {
-                            videoListEl.innerHTML = '<p style="color:#cf6679;">Tempo limite excedido ao conectar ao SD.</p>';
-                        } else if (err.message && err.message.includes('login')) {
-                            videoListEl.innerHTML = '<p style="color:#cf6679;">Redirecionando para a tela de login...</p>';
+                            videoListEl.innerHTML = '<p style="color:#cf6679;">' + tr('v.timeout') + '</p>';
                         } else {
-                            videoListEl.innerHTML = `<p style="color:#cf6679;">Erro ao ler o cartão SD: ${err.message || 'desconhecido'}</p>`;
+                            videoListEl.innerHTML = '<p style="color:#cf6679;">' + tr('v.errsd') + '</p>';
                         }
                         console.error('Erro na requisição:', err);
                     });
             }
 
-            // --- REPRODUÇÃO DE VÍDEO SEM TRAVAMENTOS ---
             function playVideo(filename) {
-                showLoader("Abrindo vídeo...");
+                showLoader('v.open');
                 updateLoader(10);
                 currentVideoTitle.textContent = filename;
                 
-                // Interrompe execução atual e limpa buffer para evitar leak de memória/trava no ESP32
                 player.pause();
                 player.removeAttribute('src');
                 player.load();
@@ -415,7 +402,6 @@
                 player.load();
             }
 
-            // Monitoramento de buffer de vídeo
             player.addEventListener('progress', () => {
                 if (player.buffered.length > 0 && player.duration > 0) {
                     const bufferedEnd = player.buffered.end(player.buffered.length - 1);
@@ -425,21 +411,20 @@
             });
 
             player.addEventListener('waiting', () => {
-                showLoader("Carregando Buffer...");
+                showLoader('v.buffer');
             });
 
             player.addEventListener('canplay', () => {
                 updateLoader(100);
                 setTimeout(hideLoader, 200);
-                player.play().catch(e => console.log("Aguardando interação do usuário para reproduzir:", e));
+                player.play().catch(e => console.log(tr('v.playuser'), e));
             });
 
             player.addEventListener('error', () => {
                 hideLoader();
-                alert("Erro ao reproduzir o arquivo. Formato não suportado ou erro de leitura do SD.");
+                alert(tr('v.errplay'));
             });
 
-            // --- UPLOAD DE ARQUIVOS ---
             fileInput.addEventListener('change', () => {
                 const file = fileInput.files[0];
                 if (!file) return;
@@ -451,7 +436,7 @@
                 formData.append("data", file, safeName);
 
                 const xhr = new XMLHttpRequest();
-                showLoader("Enviando...");
+                showLoader('v.sending');
 
                 xhr.upload.addEventListener("progress", (e) => {
                     if (e.lengthComputable) {
@@ -465,19 +450,19 @@
                         updateLoader(100);
                         setTimeout(() => {
                             hideLoader();
-                            alert("Upload concluído com sucesso!");
+                            alert(tr('v.upok'));
                             fileInput.value = "";
                             loadFileList();
                         }, 300);
                     } else {
                         hideLoader();
-                        alert("Erro no servidor: Status " + xhr.status);
+                        alert(tr('v.uperr') + xhr.status);
                     }
                 });
 
                 xhr.addEventListener("error", () => {
                     hideLoader();
-                    alert("Erro de conexão ao enviar arquivo para o ESP32.");
+                    alert(tr('v.uperrconn'));
                 });
 
                 xhr.open("POST", "/upload");
@@ -491,7 +476,6 @@
                 else return (bytes / 1048576).toFixed(2) + ' MB';
             }
 
-            // Alternar Tela Cheia
             fullscreenBtn.addEventListener('click', () => {
                 if (!document.fullscreenElement) {
                     if (player.requestFullscreen) player.requestFullscreen();
@@ -502,7 +486,6 @@
                 }
             });
 
-            // Reprodução Sequencial Automática
             player.addEventListener('ended', () => {
                 const activeItem = document.querySelector('.video-item.active');
                 if (activeItem && activeItem.nextElementSibling) {
@@ -510,7 +493,6 @@
                 }
             });
 
-            // Inicializar a lista ao abrir
             loadFileList();
         });
     </script>

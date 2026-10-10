@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Arquivos - ESP32</title>
+    <title data-i18n="list.title">Gerenciador de Arquivos - ESP32</title>
+    <script src="/i18n.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; padding: 20px; position: relative; min-height: 100vh; }
@@ -39,7 +40,6 @@
         .btn-del { background: #460d0d; color: #ff4444; }
         .loading { text-align: center; padding: 20px; font-size: 16px; color: #888; }
 
-        /* --- OVERLAY DE CARREGAMENTO RETRO --- */
         .progress-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -102,28 +102,27 @@
 </head>
 <body>
 
-<!-- Overlay Retro de Carregamento -->
 <div id="loading-overlay" class="progress-overlay" style="display: none;">
     <div class="progress-box">
         <div class="progress-header">
-            <span id="loader-title">Lendo SD...</span>
+            <span id="loader-title" data-i18n="list.readsd">Lendo SD...</span>
             <span id="loader-percent">0%</span>
         </div>
         <div class="progress-bar-container">
             <div id="loader-bar" class="progress-bar-fill"></div>
         </div>
-        <div class="progress-footer">AGUARDE...</div>
+        <div class="progress-footer" data-i18n="list.wait">AGUARDE...</div>
     </div>
 </div>
 
 <div class="container">
     <div class="header">
-        <h2>📂 Gerenciador de Arquivos do SD</h2>
+        <h2 data-i18n="list.header">📂 Gerenciador de Arquivos do SD</h2>
         <div class="btn-group">
-            <a href="/" class="btn-act-head btn-home">🏠 Inicio</a>
-            <button class="btn-act-head btn-new" onclick="criarNovoArquivo()">📝 Novo TXT</button>
-            <button class="btn-act-head btn-refresh" onclick="carregarArquivos(currentPath)">🔄 Atualizar</button>
-            <button class="btn-act-head btn-logout" onclick="fazerLogout()">🚪 Sair</button>
+            <a href="/" class="btn-act-head btn-home" data-i18n="list.home">🏠 Inicio</a>
+            <button class="btn-act-head btn-new" onclick="criarNovoArquivo()" data-i18n="list.new">📝 Novo TXT</button>
+            <button class="btn-act-head btn-refresh" onclick="carregarArquivos(currentPath)" data-i18n="list.refresh">🔄 Atualizar</button>
+            <button class="btn-act-head btn-logout" onclick="fazerLogout()" data-i18n="list.logout">🚪 Sair</button>
         </div>
     </div>
 
@@ -132,29 +131,32 @@
     <table>
         <thead>
             <tr>
-                <th>Tipo</th>
-                <th>Caminho / Nome</th>
-                <th>Tamanho</th>
-                <th>Ações</th>
+                <th data-i18n="list.type">Tipo</th>
+                <th data-i18n="list.name">Caminho / Nome</th>
+                <th data-i18n="list.size">Tamanho</th>
+                <th data-i18n="list.act">Ações</th>
             </tr>
         </thead>
         <tbody id="tabela-arquivos">
-            <tr><td colspan="4" class="loading">Iniciando leitura...</td></tr>
+            <tr><td colspan="4" class="loading" data-i18n="list.init">Iniciando leitura...</td></tr>
         </tbody>
     </table>
 </div>
 
 <script>
+window.applyCustomI18N = function(tr, lang) {
+    window._tr = tr;
+};
 let currentPath = '/';
 
-// Controles da Barra Retro
 const overlay = document.getElementById('loading-overlay');
 const loaderTitle = document.getElementById('loader-title');
 const loaderPercent = document.getElementById('loader-percent');
 const loaderBar = document.getElementById('loader-bar');
 
-function showLoader(title = "Lendo SD...") {
-    loaderTitle.textContent = title;
+function showLoader(titleKey) {
+    const tr = window._tr || function(k){return k;};
+    loaderTitle.textContent = titleKey ? tr(titleKey) : tr('list.readsd');
     loaderPercent.textContent = "0%";
     loaderBar.style.width = "0%";
     overlay.style.display = 'flex';
@@ -195,43 +197,41 @@ function fazerLogout() {
 }
 
 function criarNovoArquivo() {
-    let nome = prompt("Digite o nome do novo arquivo (ex: notas.txt):");
+    const tr = window._tr || function(k){return k;};
+    let nome = prompt(tr('list.prompt'));
     if (!nome) return;
-    
-    // Força extensão .txt se não tiver extensão
+
     if (!nome.includes('.')) nome += '.txt';
-    
+
     let fullPath = currentPath === '/' ? '/' + nome : currentPath + '/' + nome;
     window.location.href = `/edit.html?file=${encodeURIComponent(fullPath)}`;
 }
 
 async function carregarArquivos(dirPath) {
+    const tr = window._tr || function(k){return k;};
     currentPath = dirPath;
-    document.getElementById('current-path').innerText = 'Diretório: ' + currentPath;
+    document.getElementById('current-path').innerText = tr('list.dir') + currentPath;
 
     const tbody = document.getElementById('tabela-arquivos');
-    
-    showLoader("Lendo Diretório...");
+
+    showLoader('list.readdir');
     updateLoader(25);
+
     try {
         const response = await fetch('/json?dir=' + encodeURIComponent(currentPath));
-        if (response.status === 401) {
-            window.location.href = '/login.html';
-            return;
-        }
         updateLoader(65);
-        
-        if (!response.ok) throw new Error('Erro ao ler SD (status ' + response.status + ')');
-        
+
+        if (!response.ok) throw new Error(tr('list.errread'));
+
         const arquivos = await response.json();
         updateLoader(85);
-        
+
         tbody.innerHTML = '';
 
         if (currentPath !== '/' && currentPath !== '') {
             const trVoltar = document.createElement('tr');
             trVoltar.className = 'back-row';
-            trVoltar.innerHTML = '<td colspan="4">⬅️ <b>[ VOLTAR PARA A PASTA ANTERIOR ]</b></td>';
+            trVoltar.innerHTML = '<td colspan="4">' + tr('list.back') + '</td>';
             trVoltar.onclick = () => {
                 let parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
                 if (parentPath === '') parentPath = '/';
@@ -242,7 +242,7 @@ async function carregarArquivos(dirPath) {
 
         if (arquivos.length === 0) {
             const trVazio = document.createElement('tr');
-            trVazio.innerHTML = '<td colspan="4" class="loading">Pasta vazia.</td>';
+            trVazio.innerHTML = '<td colspan="4" class="loading">' + tr('list.empty') + '</td>';
             tbody.appendChild(trVazio);
             updateLoader(100);
             setTimeout(hideLoader, 200);
@@ -254,23 +254,23 @@ async function carregarArquivos(dirPath) {
 
             if (nomeSimples.toLowerCase() === 'listpass.txt') return;
 
-            const tr = document.createElement('tr');
+            const trEl = document.createElement('tr');
             const isHidden = nomeSimples.startsWith('.');
-            if (isHidden) tr.classList.add('hidden-item');
+            if (isHidden) trEl.classList.add('hidden-item');
 
             let tipoTd = '';
             if (item.isDir) {
-                tipoTd = '📁 <b>[PASTA]</b>';
-                tr.classList.add('folder-row');
-                tr.title = 'Clique duplo para entrar na pasta';
-                tr.ondblclick = () => carregarArquivos(item.name);
+                tipoTd = tr('list.folder');
+                trEl.classList.add('folder-row');
+                trEl.title = tr('list.folder');
+                trEl.ondblclick = () => carregarArquivos(item.name);
             } else if (isHidden) {
-                tipoTd = '👻 <i>[OCULTO]</i>';
+                tipoTd = tr('list.hidden');
             } else {
-                tipoTd = '📄 ARQUIVO';
+                tipoTd = tr('list.file');
             }
 
-            let nomeTd = item.name + (isHidden ? ' <span class="tag-oculto">(oculto)</span>' : '');
+            let nomeTd = item.name + (isHidden ? ' <span class="tag-oculto">' + tr('list.oculto') + '</span>' : '');
             let tamanhoTd = item.isDir ? '--' : formatBytes(item.size);
 
             let acoesTd = '';
@@ -278,33 +278,34 @@ async function carregarArquivos(dirPath) {
                 let rawPath = item.name.startsWith('/') ? item.name : '/' + item.name;
                 let safePath = encodePath(rawPath);
 
-                acoesTd += `<a href="${safePath}" download class="btn-act btn-down">⬇️ Baixar</a> `;
-                
+                acoesTd += `<a href="${safePath}" download class="btn-act btn-down">${tr('list.down')}</a> `;
+
                 if (/\.(txt|log|json|ini|html|css|js)$/i.test(rawPath)) {
-                    acoesTd += `<a href="/edit.html?file=${encodeURIComponent(rawPath)}" class="btn-act btn-edit">✏️ Editar</a> `;
+                    acoesTd += `<a href="/edit.html?file=${encodeURIComponent(rawPath)}" class="btn-act btn-edit">${tr('list.edit')}</a> `;
                 }
 
-                acoesTd += `<a href="/deleteXARQ?file=${encodeURIComponent(rawPath)}" onclick="return confirm('Excluir arquivo?')" class="btn-act btn-del">❌ Excluir</a>`;
+                acoesTd += `<a href="/deleteXARQ?file=${encodeURIComponent(rawPath)}" onclick="return confirm('${tr('list.cdel')}')" class="btn-act btn-del">${tr('list.del')}</a>`;
             } else {
-                acoesTd = '<small style="color:#00ff66;">(Duplo clique para abrir)</small>';
+                acoesTd = '<small style="color:#00ff66;">' + tr('list.dblclick') + '</small>';
             }
 
-            tr.innerHTML = `
+            trEl.innerHTML = `
                 <td>${tipoTd}</td>
                 <td>${nomeTd}</td>
                 <td>${tamanhoTd}</td>
                 <td>${acoesTd}</td>
             `;
 
-            tbody.appendChild(tr);
+            tbody.appendChild(trEl);
         });
 
         updateLoader(100);
         setTimeout(hideLoader, 300);
 
     } catch (err) {
+        const tr = window._tr || function(k){return k;};
         hideLoader();
-        tbody.innerHTML = `<tr><td colspan="4" style="color:#ff4444; text-align:center; padding:20px;">❌ Falha ao carregar lista do SD: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="color:#ff4444; text-align:center; padding:20px;">${tr('list.loadfail')}${err.message}</td></tr>`;
     }
 }
 

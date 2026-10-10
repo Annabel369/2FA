@@ -12,8 +12,8 @@ void setup() {
   // LANG_EN_US = Inglês / English
   // LANG_PT_BR = Português / Portuguese
   
-  GlobalLanguage = LANG_PT_BR; // Ativação em Inglês
-  //GlobalLanguage = LANG_PT_BR; // Ativação em Português
+  //GlobalLanguage = LANG_EN_US; // Ativação em Inglês
+  GlobalLanguage = LANG_EN_US;   // Ativação em Português
 
 
   // Configura o pino de Backlight como saída
@@ -236,16 +236,15 @@ void setup() {
     // Meteorologica</a> "; h += "</div>";
     // --------------------------------------------
     //    h += "<form action='/select'>";
-    //--------------------novo
     h += "<div>";
     h += "<select id='idVisor' name='id'>";
-    h += "  <option value='-1'>VISOR CREEPER</option>";
-    h += "  <option value='-2'>VISOR: QR CODE WIFI</option>";
-    h += "  <option value='-3'>VISOR: QR CODE PIX</option>";
-    h += "  <option value='-4'>VISOR: METEOROLOGIA (API)</option>";
-    h += "  <option value='-5'>VISOR: PERFORMANCE PC</option>";
-    h += "  <option value='-6'>VISOR: QR CODE WISER</option>";
-    h += "  <option value='-7'>VISOR: TECLADO WI-FI TOUCH</option>";
+    h += "  <option value='-1'>" + tr("VISOR CREEPER", "CREEPER DISPLAY") + "</option>";
+    h += "  <option value='-2'>" + tr("VISOR: QR CODE WIFI", "DISPLAY: WIFI QR CODE") + "</option>";
+    h += "  <option value='-3'>" + tr("VISOR: QR CODE PIX", "DISPLAY: PIX QR CODE") + "</option>";
+    h += "  <option value='-4'>" + tr("VISOR: METEOROLOGIA (API)", "DISPLAY: WEATHER (API)") + "</option>";
+    h += "  <option value='-5'>" + tr("VISOR: PERFORMANCE PC", "DISPLAY: PC PERFORMANCE") + "</option>";
+    h += "  <option value='-6'>" + tr("VISOR: QR CODE WISER", "DISPLAY: WISER QR CODE") + "</option>";
+    h += "  <option value='-7'>" + tr("VISOR: TECLADO WI-FI TOUCH", "DISPLAY: WI-FI TOUCH KEYBOARD") + "</option>";
     for (int i = 0; i < accounts.size(); i++) {
       h +=
           "<option value='" + String(i) + "'>" + accounts[i].name + "</option>";
@@ -253,93 +252,78 @@ void setup() {
     h += "</select>";
     h += "<button onclick='mudarTela()' "
          "style='background:#000;color:#0f0;border:1px solid "
-         "#0f0;padding:10px;width:100%;cursor:pointer;font-family:monospace;'>"
-         "EXECUTAR COMANDO</button>";
+         "#0f0;padding:10px;width:100%;cursor:pointer;font-family:monospace;'>" +
+         tr("EXECUTAR COMANDO", "EXECUTE COMMAND") + "</button>";
     h += "<p id='statusMsg' style='height:20px; color:#ff0; font-size:0.9em; "
-         "margin-top:10px;'></p>"; // Espaço para a mensagem
+         "margin-top:10px;'></p>";
     h += "</div>";
-    // JavaScript Atualizado
     h += "<script>";
     h += "function mudarTela(){";
     h += "  var sel = document.getElementById('idVisor');";
     h += "  var id = sel.value;";
     h += "  var texto = sel.options[sel.selectedIndex].text;";
     h += "  var msg = document.getElementById('statusMsg');";
-    h += "  ";
-    // Lógica para a mensagem personalizada
-    h += "  if(id == '-1') { msg.innerHTML = '> Iniciando Rosto Creeper...'; }";
-    h += "  else if(id == '-2') { msg.innerHTML = '> Gerando QR Code WiFi...'; "
-         "}";
-    h += "  else if(id == '-3') { msg.innerHTML = '> Chamando Pagamento "
-         "PIX...'; }";
-    h += "  else if(id == '-4') { msg.innerHTML = '> Consultando "
-         "Meteorologia...'; }";
-    h += "  else if(id == '-5') { msg.innerHTML = '> Monitorando Hardware "
-         "Debian...'; }";
-    h += "  else if(id == '-6') { msg.innerHTML = '> Chamando Pagamento "
-         "Wiser...'; }"; // <-- ADICIONE ESTA
-    h += "  else { msg.innerHTML = '> Solicitando Token: ' + texto; }";
-    h += "  ";
+    h += "  var lang = '" + String((GlobalLanguage == LANG_EN_US) ? "en" : "pt") + "';";
+    h += "  if(id == '-1') { msg.innerHTML = (lang=='en' ? '> Starting Creeper Face...' : '> Iniciando Rosto Creeper...'); }";
+    h += "  else if(id == '-2') { msg.innerHTML = (lang=='en' ? '> Generating WiFi QR Code...' : '> Gerando QR Code WiFi...'); }";
+    h += "  else if(id == '-3') { msg.innerHTML = (lang=='en' ? '> Calling PIX Payment...' : '> Chamando Pagamento PIX...'); }";
+    h += "  else if(id == '-4') { msg.innerHTML = (lang=='en' ? '> Fetching Weather...' : '> Consultando Meteorologia...'); }";
+    h += "  else if(id == '-5') { msg.innerHTML = (lang=='en' ? '> Monitoring Debian Hardware...' : '> Monitorando Hardware Debian...'); }";
+    h += "  else if(id == '-6') { msg.innerHTML = (lang=='en' ? '> Calling Wiser Payment...' : '> Chamando Pagamento Wiser...'); }";
+    h += "  else { msg.innerHTML = (lang=='en' ? '> Requesting Token: ' : '> Solicitando Token: ') + texto; }";
     h += "  fetch('/select?id=' + id).then(response => {";
     h += "    if(response.ok) {";
-    h += "       setTimeout(() => { msg.innerHTML = '> Comando enviado com "
-         "sucesso!'; }, 500);";
-    h += "       setTimeout(() => { msg.innerHTML = ''; }, 3000);"; // Limpa a
-                                                                    // mensagem
-                                                                    // após 3
-                                                                    // segundos
+    h += "       setTimeout(() => { msg.innerHTML = (lang=='en' ? '> Command sent successfully!' : '> Comando enviado com sucesso!'); }, 500);";
+    h += "       setTimeout(() => { msg.innerHTML = ''; }, 3000);";
     h += "    }";
     h += "  });";
     h += "}";
     h += "</script>";
-    //--------------------novo
-    // h += "</select><input type='submit' value='EXIBIR NO VISOR'></form><br>";
     if (ehMickey()) {
       h += "<div style='display: grid; grid-template-columns: 1fr 1fr; gap: "
            "10px;'>";
       h +=
           "  <a href='/v.html' style='display:block; background-color:#bb86fc; "
           "color:#000; padding:10px; text-decoration:none; border-radius:4px; "
-          "font-weight:bold; text-align:center;'>🎬 VÍDEOS</a>";
+          "font-weight:bold; text-align:center;'>🎬 " + tr("VÍDEOS", "VIDEOS") + "</a>";
       h += "  <a href='/list.html' style='display:block; "
            "background-color:#03dac6; color:#000; padding:10px; "
            "text-decoration:none; border-radius:4px; font-weight:bold; "
-           "text-align:center;'>📋 LISTA</a>";
+           "text-align:center;'>📋 " + tr("LISTA", "LIST") + "</a>";
       h += "  <a href='/vault' style='display:block; background-color:#2c2c2c; "
            "color:#fff; padding:10px; text-decoration:none; border-radius:4px; "
            "text-align:center;'>📁 VAULT</a>";
       h +=
           "  <a href='/manage' style='display:block; background-color:#2c2c2c; "
           "color:#fff; padding:10px; text-decoration:none; border-radius:4px; "
-          "text-align:center;'>🔑 TOKENS</a>";
+          "text-align:center;'>🔑 " + tr("TOKENS", "TOKENS") + "</a>";
       h += "  <a href='/login.html' style='display:block; "
            "background-color:#2c2c2c; color:#fff; padding:10px; "
            "text-decoration:none; border-radius:4px; text-align:center; "
-           "grid-column: span 2;'>🔐 LOGIN</a>";
+           "grid-column: span 2;'>🔐 " + tr("LOGIN", "LOGIN") + "</a>";
       h += "  <a href='/network' style='display:block; "
            "background-color:#2c2c2c; color:#fff; padding:10px; "
            "text-decoration:none; border-radius:4px; text-align:center; "
-           "grid-column: span 2;'>⚙️ CONFIG WI-FI & IP</a>";
+           "grid-column: span 2;'>⚙️ " + tr("CONFIG WI-FI & IP", "CONFIG WI-FI & IP") + "</a>";
       h += "</div>";
     } else {
       h += "<div style='text-align:center;'>";
-      h += "  <p style='color:#cf6679; font-weight:bold;'>ACESSO NEGADO: IP "
-           "PROTEGIDO</p>";
+      h += "  <p style='color:#cf6679; font-weight:bold;'>" + tr("ACESSO NEGADO: IP PROTEGIDO", "ACCESS DENIED: IP PROTECTED") + "</p>";
       h += "  <a href='/login.html' style='display:inline-block; "
            "background-color:#bb86fc; color:#000; padding:10px 20px; "
-           "text-decoration:none; border-radius:4px; font-weight:bold;'>🔐 IR "
-           "PARA LOGIN</a>";
+           "text-decoration:none; border-radius:4px; font-weight:bold;'>🔐 " +
+           tr("IR PARA LOGIN", "GO TO LOGIN") + "</a>";
       h += "</div>";
     }
-    h += "</div>";    // Fecha a div box
-    h += getFooter(); // CHAMA A FUNÇÃO AQUI
+    h += "</div>";
+    h += getFooter();
     if (updateDisponivel) {
       h += "<div style='background:#330; border:1px solid #ff0; color:#ff0; "
            "padding:10px; margin:10px 0; text-align:center;'>";
-      h += "📢 <b>Nova versão disponível!</b> (v" + versaoNova + ")<br>";
+      h += "📢 <b>" + tr("Nova versão disponível!", "New version available!") + "</b> (v" + versaoNova + ")<br>";
       h +=
           "<a href='https://github.com/Annabel369/2FATouch' style='color:#fff; "
-          "text-decoration:underline;'>Clique para atualizar</a>";
+          "text-decoration:underline;'>" + tr("Clique para atualizar", "Click to update") + "</a>";
       h += "</div>";
     }
     h += "</body></html>";
@@ -347,7 +331,7 @@ void setup() {
   });
   server.on("/manage", [css, ehMickey]() {
     if (!ehMickey())
-      return server.send(403, "Negado");
+      return server.send(403, "text/plain", tr("Negado", "Denied"));
     if (!verificarAcesso())
       return;
     String h =
@@ -376,24 +360,23 @@ void setup() {
     currentIndex = -1;
     currentSeedIndex = -1;
     if (modo == "WIFI") {
-      displayMode = 1; // QR WiFi
+      displayMode = 1;
     } else if (modo == "PIX") {
-      displayMode = 2; // QR PIX
+      displayMode = 2;
     } else if (modo == "CLIMA") {
-      displayMode = 4;            // Nova tela de Meteorologia
-      carregarTelaMeteorologia(); // Busca os dados com animação de progresso
+      displayMode = 4;
+      carregarTelaMeteorologia();
     } else if (modo == "WISE") {
-      displayMode = 6; // QR WISE
+      displayMode = 6;
     } else {
-      displayMode = 0; // Volta para o Rosto do Creeper
+      displayMode = 0;
     }
     forceRedraw = true;
-    server.send(200, "text/html", "Modo " + modo + " Ativado no Visor");
+    server.send(200, "text/html", tr("Modo ", "Mode ") + modo + tr(" Ativado no Visor", " Activated on Display"));
   });
-  // --- NOVA ROTA: FORMULÁRIO PARA ADICIONAR ---
   server.on("/add", [css, ehMickey]() {
     if (!ehMickey())
-      return server.send(403, "Negado");
+      return server.send(403, "text/plain", tr("Negado", "Denied"));
     if (!verificarAcesso())
       return;
     String h =
@@ -403,12 +386,13 @@ void setup() {
         "/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' "
         "content='width=device-width, initial-scale=1.0'>" +
         css +
-        "</head><body><div class='box'><h2>NOVO TOKEN</h2><form method='POST' "
+        "</head><body><div class='box'><h2>" + tr("NOVO TOKEN", "NEW TOKEN") + "</h2><form method='POST' "
         "action='/reg'>";
-    h += "NOME (Ex: Discord):<input name='u'>SECRET (Base32):<input "
-         "name='s'>SENHA (Opcional):<input name='p'><input type='submit' "
-         "value='CRIAR TOKEN'></form><br><a "
-         "href='/manage'>VOLTAR</a></div></body></html>";
+    h += tr("NOME (Ex: Discord):", "NAME (Ex: Discord):") + "<input name='u'>" +
+         tr("SECRET (Base32):", "SECRET (Base32):") + "<input "
+         "name='s'>" + tr("SENHA (Opcional):", "PASSWORD (Optional):") + "<input name='p'><input type='submit' "
+         "value='" + tr("CRIAR TOKEN", "CREATE TOKEN") + "'></form><br><a "
+         "href='/manage'>" + tr("VOLTAR", "BACK") + "</a></div></body></html>";
     server.send(200, "text/html", h);
   });
   // --- NOVA ROTA: REGISTRAR NO SD ---
@@ -429,7 +413,7 @@ void setup() {
   });
   server.on("/edit", [css, ehMickey]() {
     if (!ehMickey())
-      return server.send(403, "Negado");
+      return server.send(403, "text/plain", tr("Negado", "Denied"));
     int id = server.arg("id").toInt();
     TotpAccount acc = accounts[id];
     String h =
@@ -439,14 +423,14 @@ void setup() {
         "/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' "
         "content='width=device-width, initial-scale=1.0'>" +
         css +
-        "</head><body><div class='box'><h2>EDITAR TOKEN</h2><form "
+        "</head><body><div class='box'><h2>" + tr("EDITAR TOKEN", "EDIT TOKEN") + "</h2><form "
         "method='POST' action='/update?id=" +
         String(id) + "'>'";
-    h += "NOME:<input name='u' value='" + acc.name +
-         "'>SECRET:<input name='s' value='" + acc.secretBase32 +
-         "'>PASS:<input name='p' value='" + acc.password +
-         "'><input type='submit' value='SALVAR "
-         "ALTERAÇÕES'></form></div></body></html>";
+    h += tr("NOME:", "NAME:") + "<input name='u' value='" + acc.name +
+         "'>" + tr("SECRET:", "SECRET:") + "<input name='s' value='" + acc.secretBase32 +
+         "'>" + tr("PASS:", "PASS:") + "<input name='p' value='" + acc.password +
+         "'><input type='submit' value='" + tr("SALVAR ALTERAÇÕES", "SAVE CHANGES") +
+         "'></form></div></body></html>";
     server.send(200, "text/html", h);
   });
   server.on("/update", HTTP_POST, [ehMickey]() {
@@ -471,15 +455,13 @@ void setup() {
   const char *headerkeys2[] = {"Authorization", "Range"};
   size_t headerkeyssize2 = sizeof(headerkeys2) / sizeof(char *);
   server.collectHeaders(headerkeys2, headerkeyssize2);
-  // Registra a rota do JSON
   server.on("/json", handleListJSON);
-  // Registra as rotas de Editar e Deletar
   server.on("/editXARQ", handleEditFile);
   server.on("/deleteXARQ", handleDeleteFile);
-  // Registra rota de logout
   server.on("/list.html", handleListHTML);
   server.on("/v.html", handleListHTML2);
   server.on("/login.html", handleLoginRoute);
+  server.on("/i18n.js", handleI18nJS);
   server.on("/doLogin", HTTP_POST, handleDoLogin);
   server.on("/logout", handleLogoutCustom);
   // Rota de Upload corrigida (envia o HTTP 200 apenas após concluir)
@@ -505,10 +487,10 @@ void setup() {
         file.close();
         server.send(200, "text/plain", "OK");
       } else {
-        server.send(500, "text/plain", "Erro ao abrir arquivo para escrita");
+        server.send(500, "text/plain", tr("Erro ao abrir arquivo para escrita", "Error opening file for writing"));
       }
     } else {
-      server.send(400, "text/plain", "Parametros ausentes");
+      server.send(400, "text/plain", tr("Parametros ausentes", "Missing parameters"));
     }
   });
   server.on("/network", [css, ehMickey]() {
@@ -516,7 +498,7 @@ void setup() {
     if (!verificarAcesso())
       return;
     if (!ehMickey())
-      return server.send(403, "Negado");
+      return server.send(403, "text/plain", tr("Negado", "Denied"));
     String h =
         "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' "
         "type='image/x-icon' href='http://" +
@@ -524,24 +506,24 @@ void setup() {
         "/favicon.ico'><head><meta charset='UTF-8'><meta name='viewport' "
         "content='width=device-width, initial-scale=1.0'>" +
         css +
-        "</head><body><div class='box'><h2>CONFIG REDE</h2><form method='POST' "
+        "</head><body><div class='box'><h2>" + tr("CONFIG REDE", "NETWORK CONFIG") + "</h2><form method='POST' "
         "action='/net_save'>";
-    h += "SSID:<input name='ss' value='" + cfgSSID +
-         "'>PASS:<input name='pw' value='" + cfgPASS + "'>";
-    h += "MODO:<select name='mo'><option value='REDE' " +
+    h += tr("SSID:", "SSID:") + "<input name='ss' value='" + cfgSSID +
+         "'>" + tr("PASS:", "PASS:") + "<input name='pw' value='" + cfgPASS + "'>";
+    h += tr("MODE:", "MODE:") + "<select name='mo'><option value='REDE' " +
          (String(cfgMODO == "REDE" ? "selected" : "")) +
-         ">REDE (Prefixo)</option>";
+         ">" + tr("REDE (Prefixo)", "NETWORK (Prefix)") + "</option>";
     h += "<option value='UNICO' " +
          (String(cfgMODO == "UNICO" ? "selected" : "")) +
-         ">IP UNICO</option></select>";
-    h += "IP/PREFIXO:<input name='ip' value='" + cfgIP + "'>";
-    h += "CHAVE PIX (CPF/Email):<input name='px' value='" + cfgPIX + "'>";
-    h += "LINK WISE (Ex: wise.com/pay/me/...):<input name='ws' value='" +
+         ">" + tr("IP UNICO", "SINGLE IP") + "</option></select>";
+    h += tr("IP/PREFIX:", "IP/PREFIX:") + "<input name='ip' value='" + cfgIP + "'>";
+    h += tr("CHAVE PIX (CPF/Email):", "PIX KEY (CPF/Email):") + "<input name='px' value='" + cfgPIX + "'>";
+    h += tr("LINK WISE (Ex: wise.com/pay/me/...):", "WISE LINK (Ex: wise.com/pay/me/...):") + "<input name='ws' value='" +
          cfgWiser + "'>";
-    h += "<input type='submit' value='SALVAR E REINICIAR'></form><br><a "
-         "href='/'>VOLTAR</a></div><footer>'Copyright' 2025-2026 Criado por "
-         "Amauri Bueno dos Santos com apoio da Gemini. "
-         "https://github.com/Annabel369/2FATouch</footer></body></html>";
+    h += "<input type='submit' value='" + tr("SALVAR E REINICIAR", "SAVE AND RESTART") + "'></form><br><a "
+         "href='/'>" + tr("VOLTAR", "BACK") + "</a></div><footer>'Copyright' 2025-2026 " +
+         tr("Criado por Amauri Bueno dos Santos com apoio da Gemini.", "Created by Amauri Bueno dos Santos with support from Gemini.") +
+         " https://github.com/Annabel369/2FATouch</footer></body></html>";
     server.send(200, "text/html", h);
   });
   server.on("/net_save", HTTP_POST, [ehMickey]() {
@@ -564,7 +546,7 @@ void setup() {
     if (!verificarAcesso())
       return;
     if (!ehMickey())
-      return server.send(403, "Negado");
+      return server.send(403, "text/plain", tr("Negado", "Denied"));
     String h = "<!DOCTYPE html><html lang='pt'><head><link rel='shortcut icon' "
                "type='image/x-icon' href='http://" +
                WiFi.localIP().toString() +
@@ -572,11 +554,10 @@ void setup() {
                "content='width=device-width, initial-scale=1.0'>" +
                css + "</head><body>";
     h += "<div class='box'><h2>CRYPTO VAULT</h2>";
-    // --- LISTAGEM DAS SEEDS SALVAS ---
     h += "<div style='text-align:left; margin-bottom:20px; border-bottom:1px "
          "solid #444; padding-bottom:10px;'>";
     if (seeds.size() == 0) {
-      h += "<p style='color:#666;'>Nenhuma semente salva.</p>";
+      h += "<p style='color:#666;'>" + tr("Nenhuma semente salva.", "No seeds saved.") + "</p>";
     } else {
       for (int i = 0; i < seeds.size(); i++) {
         h += "<div style='margin-bottom:10px; display:flex; "
@@ -584,19 +565,18 @@ void setup() {
         h += "<span><b>" + seeds[i].label + "</b></span>";
         h += "<div>";
         h += "<a href='/view_seed?id=" + String(i) +
-             "' style='color:#0f0;'>[VER]</a> ";
+             "' style='color:#0f0;'>[" + tr("VER", "VIEW") + "]</a> ";
         h += "<a href='/del_seed?id=" + String(i) + "' class='del'>[X]</a>";
         h += "</div></div>";
       }
     }
     h += "</div>";
-    // ---------------------------------
-    h += "<form method='POST' action='/reg_seed'>NOME:<input name='n'>SEED (12 "
-         "Palavras):<input name='s'><input type='submit' value='ADD "
-         "SEED'></form>";
-    h += "<br><a href='/'>VOLTAR</a></div>";
-    h += "<footer>'Copyright' 2025-2026 Criado por Amauri Bueno dos Santos com "
-         "apoio da Gemini.</footer></body></html>";
+    h += "<form method='POST' action='/reg_seed'>" + tr("NOME:", "NAME:") + "<input name='n'>" +
+         tr("SEED (12 Palavras):", "SEED (12 Words):") + "<input name='s'><input type='submit' value='" +
+         tr("ADD SEED", "ADD SEED") + "'></form>";
+    h += "<br><a href='/'>" + tr("VOLTAR", "BACK") + "</a></div>";
+    h += "<footer>'Copyright' 2025-2026 " + tr("Criado por Amauri Bueno dos Santos com apoio da Gemini.", "Created by Amauri Bueno dos Santos with support from Gemini.") +
+         "</footer></body></html>";
     server.send(200, "text/html", h);
   });
   server.on("/view_seed", [ehMickey]() {
@@ -666,22 +646,22 @@ void setup() {
         // Marca o tempo para um possível fechamento automático
         tempoAberto = millis();
         hardwareAtivo = true;
-        server.send(200, "text/plain", "Acesso Liberado! Creeper ativado.\n");
+        server.send(200, "text/plain", tr("Acesso Liberado! Creeper ativado.\n", "Access Granted! Creeper activated.\n"));
         Serial.println("YubiKey ativada! Luz e Servo ligados.");
         return;
       }
     }
-    server.send(403, "text/plain", "Acesso Negado: Senha invalida!\n");
+    server.send(403, "text/plain", tr("Acesso Negado: Senha invalida!\n", "Access Denied: Invalid password!\n"));
   });
   server.on("/pcstats", [ehMickey]() {
     if (ehMickey()) {
-      displayMode = 5; // Modo que criamos para o Monitor de Performance
+      displayMode = 5;
       currentIndex = -1;
       currentSeedIndex = -1;
       forceRedraw = true;
-      server.send(200, "text/plain", "Monitor de Performance Ativado!");
+      server.send(200, "text/plain", tr("Monitor de Performance Ativado!", "Performance Monitor Activated!"));
     } else {
-      server.send(403, "text/plain", "Negado");
+      server.send(403, "text/plain", tr("Negado", "Denied"));
     }
   });
   server.on("/select", [ehMickey]() {
@@ -689,7 +669,6 @@ void setup() {
       int id = server.arg("id").toInt();
       currentIndex = -1;
       currentSeedIndex = -1;
-      // Lógica de seleção (igual à sua)
       if (id == -1)
         displayMode = 0;
       else if (id == -2)
@@ -700,9 +679,9 @@ void setup() {
         displayMode = 3;
         updateWeather();
       } else if (id == -5)
-        displayMode = 5; // <--- SEU NOVO MONITOR DE PC
+        displayMode = 5;
       else if (id == -6)
-        displayMode = 6; // wiser qrcod
+        displayMode = 6;
       else if (id == -7) {
         displayMode = 7;
         iniciarScanWiFiTFT();
@@ -711,9 +690,9 @@ void setup() {
         currentIndex = id;
       }
       forceRedraw = true;
-      server.send(200, "text/plain", "OK"); // Resposta curta para o AJAX
+      server.send(200, "text/plain", "OK");
     } else {
-      server.send(403, "text/plain", "Negado");
+      server.send(403, "text/plain", tr("Negado", "Denied"));
     }
   });
   server.begin();
@@ -886,24 +865,22 @@ void loop() {
         // 3. Coloca os textos por cima da imagem
         tft.setTextColor(TFT_CYAN, TFT_BLACK);
         tft.drawCentreString(
-            "Acesso Liberado!", 120, 195,
-            4); // Mudei o texto para fazer sentido com o sucesso
+            tr("Acesso Liberado!", "Access Granted!"), 120, 195,
+            4);
         tft.setTextColor(TFT_YELLOW, TFT_BLACK);
         tft.drawCentreString("YUBIKEY OK", 120, 220, 2);
       }
     }
-    // --- MODO 0: CREEPER / TOTP (PADRÃO) ---
     else {
       if (currentIndex < 0) {
         if (isRedraw)
           drawCreeper();
-        drawInfo(epoch); // MOSTRA HORA E IP NO MODO STANDBY
+        drawInfo(epoch);
       } else {
-        // --- LÓGICA INTELIGENTE DE NOME/EMAIL ---
         String accountName = accounts[currentIndex].name;
         if (accountName.indexOf('@') >= 0) {
           tft.setTextColor(TFT_CYAN, TFT_BLACK);
-          tft.drawCentreString("CONTA:", 120, 5, 2);
+          tft.drawCentreString(tr("CONTA:", "ACCOUNT:"), 120, 5, 2);
           tft.setTextColor(TFT_WHITE, TFT_BLACK);
           int fonteEmail = (accountName.length() > 20) ? 1 : 2;
           tft.drawCentreString(accountName, 120, 25, fonteEmail);
@@ -921,7 +898,7 @@ void loop() {
                      (secondsLeft < 5) ? TFT_RED : TFT_GREEN);
         if (accounts[currentIndex].password != "") {
           tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-          tft.drawCentreString("Pass: " + accounts[currentIndex].password, 120,
+          tft.drawCentreString(tr("Pass: ", "Pass: ") + accounts[currentIndex].password, 120,
                                210, 2);
         }
       }

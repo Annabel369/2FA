@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Arquivo - ESP32</title>
+    <title data-i18n="edit.title">Editar Arquivo - ESP32</title>
+    <script src="/i18n.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: monospace; background-color: #121212; color: #e0e0e0; padding: 20px; }
@@ -24,20 +25,31 @@
 
 <div class="container">
     <div class="header">
-        <h3 id="file-title">Editando: ...</h3>
+        <h3 id="file-title" data-i18n="edit.editing">Editando: ...</h3>
     </div>
 
-    <textarea id="editor" placeholder="Carregando conteúdo do arquivo..."></textarea>
+    <textarea id="editor" placeholder="Carregando conteúdo do arquivo..." data-i18n-attr="placeholder:edit.place"></textarea>
 
     <div class="btn-bar">
-        <button class="btn-save" onclick="salvarArquivo()">💾 Salvar Alterações</button>
-        <a href="/list.html" class="btn-cancel">⬅️ Voltar / Cancelar</a>
+        <button class="btn-save" onclick="salvarArquivo()" data-i18n="edit.save">💾 Salvar Alterações</button>
+        <a href="/list.html" class="btn-cancel" data-i18n="edit.cancel">⬅️ Voltar / Cancelar</a>
     </div>
 
     <div id="msg"></div>
 </div>
 
 <script>
+var _tr = function(k){ return k; };
+var _filePathFallback = 'Nenhum arquivo';
+
+window.applyCustomI18N = function(tr, lang) {
+    _tr = tr;
+    _filePathFallback = (lang === 'en') ? 'No file' : 'Nenhum arquivo';
+    var fp = urlParams.get('file');
+    document.getElementById('file-title').innerText = _tr('edit.editing') + (fp || _filePathFallback);
+    document.getElementById('editor').setAttribute('placeholder', _tr('edit.place'));
+};
+
 const urlParams = new URLSearchParams(window.location.search);
 const filePath = urlParams.get('file');
 
@@ -45,19 +57,18 @@ document.getElementById('file-title').innerText = 'Editando: ' + (filePath || 'N
 
 async function carregarConteudo() {
     if (!filePath) {
-        document.getElementById('editor').value = 'Erro: Nenhum arquivo especificado na URL.';
+        document.getElementById('editor').value = _tr('edit.errcustom');
         return;
     }
 
     try {
-        // Busca o conteúdo bruto do arquivo diretamente do servidor WebServer do ESP32
         const resp = await fetch(filePath);
-        if (!resp.ok) throw new Error('Não foi possível ler o arquivo ' + filePath);
+        if (!resp.ok) throw new Error(_tr('edit.loaderr') + filePath);
         const text = await resp.text();
         document.getElementById('editor').value = text;
     } catch (err) {
         document.getElementById('msg').style.color = '#ff4444';
-        document.getElementById('msg').innerText = 'Erro ao carregar: ' + err.message;
+        document.getElementById('msg').innerText = _tr('edit.errload') + err.message;
     }
 }
 
@@ -65,7 +76,7 @@ async function salvarArquivo() {
     const conteudo = document.getElementById('editor').value;
     const msgDiv = document.getElementById('msg');
     msgDiv.style.color = '#ffcc00';
-    msgDiv.innerText = 'Salvando...';
+    msgDiv.innerText = _tr('edit.saving');
 
     try {
         const formData = new FormData();
@@ -79,13 +90,13 @@ async function salvarArquivo() {
 
         if (resp.ok) {
             msgDiv.style.color = '#00ff66';
-            msgDiv.innerText = '✅ Arquivo salvo com sucesso!';
+            msgDiv.innerText = _tr('edit.saved');
         } else {
-            throw new Error('Falha no servidor ao salvar.');
+            throw new Error(_tr('edit.savefail'));
         }
     } catch (err) {
         msgDiv.style.color = '#ff4444';
-        msgDiv.innerText = '❌ Erro ao salvar: ' + err.message;
+        msgDiv.innerText = _tr('edit.saverr') + err.message;
     }
 }
 
